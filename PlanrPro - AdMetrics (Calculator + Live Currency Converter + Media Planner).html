@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlanrPro — AdMetrics | Performance Marketing Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+
+    .app-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex;
+      background: rgba(255,255,255,0.07);
+      border-radius: 50px;
+      padding: 4px;
+      width: 100%;
+      gap: 4px;
+    }
+    .tab-btn {
+      flex: 1; padding: 9px 4px; border: none; border-radius: 50px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.25s; background: transparent; color: rgba(255,255,255,0.45);
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; box-shadow: 0 4px 14px rgba(99,102,241,0.5);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+      width: 100%;
+      display: none;
+    }
+    .card.active { display: block; }
+
+    /* ── CALCULATOR ── */
+    .display {
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 18px 16px 12px;
+      margin-bottom: 18px;
+      text-align: right;
+      min-height: 88px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .expression { font-size: 13px; color: rgba(255,255,255,0.35); min-height: 18px; word-break: break-all; margin-bottom: 4px; }
+    .result { font-size: 38px; font-weight: 300; color: #fff; word-break: break-all; line-height: 1.1; }
+
+    .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    button.calc-btn {
+      height: 58px; border: none; border-radius: 14px;
+      font-size: 19px; font-weight: 500; cursor: pointer;
+      transition: transform 0.1s, background 0.2s; outline: none;
+    }
+    button.calc-btn:active { transform: scale(0.92); }
+    .btn-num   { background: rgba(255,255,255,0.10); color:#fff; }
+    .btn-num:hover { background: rgba(255,255,255,0.18); }
+    .btn-op    { background: rgba(99,102,241,0.6); color:#fff; }
+    .btn-op:hover  { background: rgba(99,102,241,0.85); }
+    .btn-clear { background: rgba(239,68,68,0.6); color:#fff; }
+    .btn-clear:hover { background: rgba(239,68,68,0.85); }
+    .btn-eq    { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; font-size:22px; }
+    .btn-eq:hover { background: linear-gradient(135deg,#4f46e5,#7c3aed); }
+    .btn-mod   { background: rgba(245,158,11,0.6); color:#fff; }
+    .btn-mod:hover { background: rgba(245,158,11,0.85); }
+    .span2 { grid-column: span 2; }
+
+    .send-btn {
+      width: 100%; margin-top: 14px; padding: 13px; border: none;
+      border-radius: 14px; background: linear-gradient(135deg,#10b981,#059669);
+      color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+      letter-spacing: 0.3px; transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+    }
+    .send-btn:hover { opacity:0.9; }
+    .send-btn:active { transform:scale(0.98); }
+
+    /* ── CURRENCY CONVERTER ── */
+    .converter-title {
+      text-align: center; color: #fff; font-size: 19px; font-weight: 700;
+      margin-bottom: 6px; letter-spacing: 0.3px;
+    }
+    .converter-title span {
+      background: linear-gradient(135deg,#6366f1,#a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .live-badge { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.35);} }
+    .live-text { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.5px; }
+    .live-text.error { color: rgba(239,100,100,0.8); }
+    .live-dot.error  { background: #ef4444; animation:none; }
+    .spinner-wrap { display:flex; align-items:center; justify-content:center; gap:10px; padding:20px 0; color:rgba(255,255,255,0.4); font-size:13px; }
+    .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,0.1); border-top-color:#6366f1; border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg);} }
+    .amount-box { background:rgba(0,0,0,0.3); border-radius:14px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+    .amount-box input { flex:1; background:transparent; border:none; outline:none; color:#fff; font-size:26px; font-weight:300; width:0; }
+    .amount-box input::placeholder { color:rgba(255,255,255,0.2); }
+    .currency-select-wrap { display:flex; align-items:center; gap:6px; background:rgba(99,102,241,0.25); border-radius:10px; padding:6px 10px; cursor:pointer; min-width:92px; user-select:none; }
+    .flag{font-size:20px;line-height:1;} .cur-code{color:#fff;font-size:14px;font-weight:700;} .cur-arrow{color:rgba(255,255,255,0.5);font-size:11px;margin-left:auto;transition:transform 0.2s;} .cur-arrow.open{transform:rotate(180deg);}
+    .currency-dropdown { position:fixed; width:260px; max-height:300px; background:#1e2240; border-radius:14px; overflow:hidden; z-index:9999; box-shadow:0 12px 44px rgba(0,0,0,0.7); display:none; flex-direction:column; }
+    .currency-dropdown.open{display:flex;}
+    .dropdown-search { padding:10px 12px; border:none; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; outline:none; flex-shrink:0; }
+    .dropdown-search::placeholder{color:rgba(255,255,255,0.3);}
+    .dropdown-list { overflow-y:scroll; -webkit-overflow-scrolling:touch; flex:1; min-height:0; }
+    .dropdown-list::-webkit-scrollbar{width:5px;} .dropdown-list::-webkit-scrollbar-track{background:rgba(255,255,255,0.04);} .dropdown-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:4px;}
+    .dropdown-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;}
+    .dropdown-item:hover{background:rgba(99,102,241,0.35);} .dropdown-item.selected{background:rgba(99,102,241,0.55);}
+    .di-flag{font-size:18px;flex-shrink:0;} .di-code{color:#fff;font-size:13px;font-weight:700;min-width:40px;flex-shrink:0;} .di-name{color:rgba(255,255,255,0.5);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .swap-row{display:flex;justify-content:center;margin:2px 0;}
+    .swap-btn{background:rgba(99,102,241,0.35);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;transition:background 0.2s,transform 0.3s;display:flex;align-items:center;justify-content:center;}
+    .swap-btn:hover{background:rgba(99,102,241,0.7);transform:rotate(180deg);}
+    .result-panel{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:14px 16px;margin-top:12px;text-align:center;}
+    .rp-from{color:rgba(255,255,255,0.45);font-size:13px;margin-bottom:4px;} .rp-to{color:#10b981;font-size:30px;font-weight:600;} .rp-rate{color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;}
+    .quick-title{color:rgba(255,255,255,0.4);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin:14px 0 8px;}
+    .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+    .quick-chip{background:rgba(255,255,255,0.07);border:none;border-radius:10px;color:rgba(255,255,255,0.75);font-size:12px;font-weight:600;padding:8px 4px;cursor:pointer;transition:background 0.2s,color 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+    .quick-chip:hover{background:rgba(99,102,241,0.5);color:#fff;} .quick-chip.active-chip{background:rgba(99,102,241,0.65);color:#fff;}
+    .qc-flag{font-size:16px;} .qc-code{font-size:10px;}
+    .rate-note{text-align:center;color:rgba(255,255,255,0.2);font-size:10px;margin-top:12px;}
+
+    /* ══════════════════════════════════════════
+       MEDIA PLANNER STYLES
+    ══════════════════════════════════════════ */
+    .mp-title {
+      text-align: center; font-size: 20px; font-weight: 800; color: #fff;
+      margin-bottom: 4px; letter-spacing: 0.3px;
+    }
+    .mp-title span { background: linear-gradient(135deg,#f59e0b,#ef4444); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .mp-subtitle { text-align:center; color:rgba(255,255,255,0.35); font-size:11px; margin-bottom:18px; }
+
+    /* Platform tabs inside media planner */
+    .mp-platform-bar {
+      display: flex; gap: 8px; margin-bottom: 18px;
+    }
+    .mp-plat-btn {
+      flex:1; padding:10px 6px; border:none; border-radius:12px;
+      font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s;
+      background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.4);
+    }
+    .mp-plat-btn.active { color:#fff; }
+    .mp-plat-btn.google.active  { background: linear-gradient(135deg,#4285f4,#34a853); box-shadow:0 4px 14px rgba(66,133,244,0.4); }
+    .mp-plat-btn.meta.active    { background: linear-gradient(135deg,#1877f2,#e1306c); box-shadow:0 4px 14px rgba(24,119,242,0.4); }
+    .mp-plat-btn.universal.active { background: linear-gradient(135deg,#f59e0b,#ef4444); box-shadow:0 4px 14px rgba(245,158,11,0.4); }
+
+    /* Section headers */
+    .mp-section {
+      display: none;
+    }
+    .mp-section.active { display: block; }
+
+    .mp-group {
+      background: rgba(0,0,0,0.2);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .mp-group-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mp-group-title .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .dot-blue   { background:#4285f4; }
+    .dot-pink   { background:#e1306c; }
+    .dot-yellow { background:#f59e0b; }
+    .dot-green  { background:#10b981; }
+    .dot-purple { background:#8b5cf6; }
+    .dot-red    { background:#ef4444; }
+
+    /* Input row */
+    .mp-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .mp-row:last-child { margin-bottom: 0; }
+    .mp-label {
+      flex: 1; font-size: 12px; color: rgba(255,255,255,0.6); line-height:1.3;
+    }
+    .mp-label small { display:block; color:rgba(255,255,255,0.25); font-size:10px; margin-top:1px; }
+    .mp-input {
+      width: 130px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 13px; font-weight:600;
+      outline: none; text-align: right; transition: border-color 0.2s;
+    }
+    .mp-input:focus { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.1); }
+    .mp-input::placeholder { color:rgba(255,255,255,0.2); font-weight:400; }
+
+    /* Output row */
+    .mp-out-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; background: rgba(255,255,255,0.04);
+      border-radius: 10px; margin-bottom: 7px;
+    }
+    .mp-out-row:last-child { margin-bottom: 0; }
+    .mp-out-label { font-size: 12px; color: rgba(255,255,255,0.5); }
+    .mp-out-label small { display:block; font-size:10px; color:rgba(255,255,255,0.25); margin-top:1px; font-style:italic; }
+    .mp-out-value { font-size: 15px; font-weight: 700; color: #fff; text-align:right; }
+    .mp-out-value.highlight { color: #10b981; font-size:18px; }
+    .mp-out-value.warn      { color: #f59e0b; }
+    .mp-out-value.danger    { color: #ef4444; }
+
+    /* Formula tag */
+    .formula-tag {
+      font-size: 10px; color: rgba(255,255,255,0.2); margin-top: 3px;
+      font-family: monospace; display:block;
+    }
+
+    /* Calc button */
+    .mp-calc-btn {
+      width: 100%; padding: 13px; border: none; border-radius: 14px;
+      font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px;
+      transition: opacity 0.2s, transform 0.1s; letter-spacing: 0.3px;
+    }
+    .mp-calc-btn:active { transform: scale(0.98); }
+    .mp-calc-btn.google-btn  { background: linear-gradient(135deg,#4285f4,#34a853); color:#fff; box-shadow:0 4px 14px rgba(66,133,244,0.4); }
+    .mp-calc-btn.meta-btn    { background: linear-gradient(135deg,#1877f2,#e1306c); color:#fff; box-shadow:0 4px 14px rgba(24,119,242,0.4); }
+    .mp-calc-btn.uni-btn     { background: linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; box-shadow:0 4px 14px rgba(245,158,11,0.4); }
+    .mp-calc-btn:hover { opacity:0.88; }
+
+    /* Reset btn */
+    .mp-reset-btn {
+      width:100%; padding:9px; border:none; border-radius:12px;
+      background:rgba(239,68,68,0.15); color:rgba(255,100,100,0.8);
+      font-size:12px; font-weight:600; cursor:pointer; margin-top:6px;
+      transition: background 0.2s;
+    }
+    .mp-reset-btn:hover { background:rgba(239,68,68,0.28); }
+
+    /* Scenario table */
+    .scenario-table {
+      width:100%; border-collapse:collapse; margin-top:12px;
+      font-size:11px;
+    }
+    .scenario-table th {
+      background: rgba(255,255,255,0.07); color:rgba(255,255,255,0.5);
+      padding:8px 10px; text-align:center; font-weight:700; font-size:10px;
+      text-transform:uppercase; letter-spacing:0.5px;
+    }
+    .scenario-table th:first-child { text-align:left; border-radius:8px 0 0 0; }
+    .scenario-table th:last-child  { border-radius:0 8px 0 0; }
+    .scenario-table td {
+      padding:8px 10px; text-align:center; color:#fff;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      font-weight:600;
+    }
+    .scenario-table td:first-child { text-align:left; color:rgba(255,255,255,0.6); font-weight:400; }
+    .scenario-table tr.cons td { color:#ef4444; }
+    .scenario-table tr.base td { color:#10b981; }
+    .scenario-table tr.opti td { color:#6366f1; }
+    .scenario-table tr.cons td:first-child,
+    .scenario-table tr.base td:first-child,
+    .scenario-table tr.opti td:first-child { color:rgba(255,255,255,0.6); }
+
+    /* KPI health badge */
+    .kpi-badge {
+      display:inline-block; padding:2px 8px; border-radius:20px;
+      font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+    }
+    .kpi-good   { background:rgba(16,185,129,0.2); color:#10b981; }
+    .kpi-warn   { background:rgba(245,158,11,0.2); color:#f59e0b; }
+    .kpi-bad    { background:rgba(239,68,68,0.2); color:#ef4444; }
+
+    /* Info tooltip icon */
+    .info-icon { display:inline-block; width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); font-size:9px; text-align:center; line-height:14px; cursor:default; margin-left:4px; }
+
+    /* Divider */
+    .mp-divider { border:none; border-top:1px solid rgba(255,255,255,0.07); margin:12px 0; }
+
+    /* Media planner scrolls naturally with page */
+    #tab-media { overflow: visible; }
+
+    /* How-to guide */
+    .mp-guide { background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25); border-radius:14px; padding:12px 14px; margin-bottom:16px; }
+    .mp-guide-title { font-size:12px; font-weight:700; color:rgba(255,255,255,0.7); margin-bottom:6px; }
+    .mp-guide-body { font-size:11px; color:rgba(255,255,255,0.45); line-height:1.7; }
+    .mp-guide-body b { color:rgba(255,255,255,0.75); }
+
+    /* Example button inside group title */
+    .mp-example-btn {
+      margin-left:auto; padding:4px 10px; border:none; border-radius:20px;
+      background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff;
+      font-size:10px; font-weight:700; cursor:pointer; letter-spacing:0.3px;
+      transition:opacity 0.2s;
+    }
+    .mp-example-btn:hover { opacity:0.82; }
+
+    /* Hint shown before inputs are filled */
+    .mp-need-hint {
+      text-align:center; padding:12px; color:rgba(255,255,255,0.3);
+      font-size:12px; background:rgba(255,255,255,0.03);
+      border-radius:10px; margin-bottom:8px;
+    }
+
+    /* ══════════════════════════════════════════
+       LEARN TAB STYLES
+    ══════════════════════════════════════════ */
+    #tab-learn { overflow: visible; max-width: 480px; }
+
+    .learn-header {
+      text-align:center; margin-bottom:16px;
+    }
+    .learn-header h2 {
+      font-size:20px; font-weight:800; color:#fff; margin-bottom:4px;
+    }
+    .learn-header h2 span { background:linear-gradient(135deg,#6366f1,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .learn-header p { font-size:11px; color:rgba(255,255,255,0.35); }
+
+    /* Sub-tab pill bar */
+    .learn-sub-bar {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;
+    }
+    .learn-sub-btn {
+      padding:6px 12px; border:none; border-radius:20px; font-size:11px; font-weight:600;
+      cursor:pointer; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.4);
+      transition:all 0.2s; white-space:nowrap;
+    }
+    .learn-sub-btn.active { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 3px 10px rgba(99,102,241,0.4); }
+    .learn-sub-btn:hover:not(.active) { background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); }
+
+    /* Learn sections */
+    .learn-section { display:none; }
+    .learn-section.active { display:block; }
+
+    /* Learn card */
+    .lcard {
+      background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06);
+      border-radius:16px; padding:16px; margin-bottom:14px;
+    }
+    .lcard-title {
+      font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+      color:rgba(255,255,255,0.5); margin-bottom:12px;
+      display:flex; align-items:center; gap:7px;
+    }
+    .lcard-title .licon { font-size:16px; }
+
+    /* Prose text */
+    .lp { font-size:12px; color:rgba(255,255,255,0.55); line-height:1.75; margin-bottom:10px; }
+    .lp:last-child { margin-bottom:0; }
+    .lp b, .lp strong { color:rgba(255,255,255,0.85); font-weight:700; }
+    .lp em { color:#a78bfa; font-style:normal; font-weight:600; }
+
+    /* Highlight box */
+    .lbox {
+      background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25);
+      border-radius:12px; padding:12px 14px; margin:10px 0;
+      font-size:12px; color:rgba(255,255,255,0.6); line-height:1.7;
+    }
+    .lbox.green  { background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.25); }
+    .lbox.red    { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.2); }
+    .lbox.yellow { background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.25); }
+    .lbox b { color:#fff; }
+
+    /* Layer cards */
+    .layer-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:10px 0; }
+    .layer-card { background:rgba(255,255,255,0.05); border-radius:12px; padding:12px 10px; text-align:center; }
+    .layer-card .ln { font-size:20px; font-weight:800; margin-bottom:4px; }
+    .layer-card .lt { font-size:11px; font-weight:700; color:#fff; margin-bottom:4px; }
+    .layer-card .ld { font-size:10px; color:rgba(255,255,255,0.4); line-height:1.5; }
+    .layer-card:nth-child(1) .ln { color:#6366f1; }
+    .layer-card:nth-child(2) .ln { color:#f59e0b; }
+    .layer-card:nth-child(3) .ln { color:#10b981; }
+
+    /* Step list */
+    .step-list { list-style:none; padding:0; margin:10px 0; }
+    .step-list li {
+      display:flex; gap:12px; align-items:flex-start;
+      padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+      font-size:12px; color:rgba(255,255,255,0.55); line-height:1.6;
+    }
+    .step-list li:last-child { border-bottom:none; }
+    .step-num {
+      min-width:26px; height:26px; border-radius:50%;
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      color:#fff; font-size:11px; font-weight:800;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .step-list li b { color:rgba(255,255,255,0.85); display:block; margin-bottom:2px; }
+
+    /* Term glossary */
+    .term-grid { display:flex; flex-direction:column; gap:6px; }
+    .term-row {
+      display:flex; align-items:baseline; gap:10px;
+      padding:8px 12px; background:rgba(255,255,255,0.04); border-radius:10px;
+      font-size:12px;
+    }
+    .term-key { color:#a78bfa; font-weight:800; min-width:48px; font-size:11px; flex-shrink:0; }
+    .term-full { color:rgba(255,255,255,0.5); font-size:10px; min-width:110px; flex-shrink:0; }
+    .term-desc { color:rgba(255,255,255,0.65); font-size:11px; }
+
+    /* Formula block */
+    .formula-block {
+      background:rgba(0,0,0,0.3); border-radius:10px; padding:12px 14px;
+      margin:8px 0; font-family:monospace; font-size:12px;
+    }
+    .formula-line { color:#10b981; margin-bottom:4px; }
+    .formula-line:last-child { margin-bottom:0; }
+    .formula-line .fl { color:rgba(255,255,255,0.3); }
+    .formula-label { font-size:10px; color:rgba(255,255,255,0.35); font-family:'Segoe UI',sans-serif; margin-bottom:8px; }
+
+    /* KPI reference table */
+    .lref-table { width:100%; border-collapse:collapse; font-size:11px; margin:8px 0; }
+    .lref-table th { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.45); padding:7px 10px; text-align:left; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; }
+    .lref-table td { padding:8px 10px; color:rgba(255,255,255,0.6); border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:top; line-height:1.5; }
+    .lref-table td:first-child { color:#a78bfa; font-weight:700; white-space:nowrap; }
+    .lref-table td:nth-child(3) { color:#10b981; font-weight:600; }
+
+    /* Scenario table in learn */
+    .lscen-table { width:100%; border-collapse:collapse; font-size:11px; margin:8px 0; }
+    .lscen-table th { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.4); padding:7px 8px; text-align:center; font-weight:700; font-size:10px; text-transform:uppercase; }
+    .lscen-table th:first-child { text-align:left; }
+    .lscen-table td { padding:8px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.04); color:rgba(255,255,255,0.65); font-size:11px; }
+    .lscen-table td:first-child { text-align:left; font-weight:600; }
+    .lscen-table tr:nth-child(1) td { color:#ef4444; }
+    .lscen-table tr:nth-child(2) td { color:#10b981; }
+    .lscen-table tr:nth-child(3) td { color:#6366f1; }
+    .lscen-table tr td:first-child { color:rgba(255,255,255,0.6); }
+
+    /* Source cards */
+    .source-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0; }
+    .source-card { background:rgba(255,255,255,0.05); border-radius:10px; padding:10px 12px; }
+    .source-card .sc-name { font-size:11px; font-weight:700; color:#fff; margin-bottom:4px; }
+    .source-card .sc-desc { font-size:10px; color:rgba(255,255,255,0.4); line-height:1.5; }
+    .source-card .sc-use  { font-size:10px; color:#a78bfa; margin-top:4px; }
+
+    /* Funnel flow */
+    .funnel-flow { display:flex; flex-direction:column; align-items:center; gap:0; margin:10px 0; }
+    .funnel-step {
+      width:100%; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.2);
+      border-radius:10px; padding:10px 14px; text-align:center;
+      font-size:12px; color:#fff; font-weight:600;
+    }
+    .funnel-arrow { color:rgba(255,255,255,0.2); font-size:18px; line-height:1.2; }
+    .funnel-step small { display:block; font-size:10px; color:rgba(255,255,255,0.4); font-weight:400; margin-top:2px; font-family:monospace; }
+
+    /* ══════════════════════════════════════════
+       PLANRPRO BRANDING
+    ══════════════════════════════════════════ */
+    .brand-header {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 0 4px;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    /* SVG icon sizing handled inline */
+    .brand-wordmark {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .brand-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      line-height: 1;
+      color: #fff;
+    }
+    .brand-name span {
+      color: #a78bfa;
+      font-weight: 400;
+    }
+    .brand-tagline {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* Footer branding */
+    .brand-footer {
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      padding: 18px 0 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 6px;
+    }
+    .brand-footer .bf-built {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 6px;
+    }
+    .brand-footer .bf-author {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 4px;
+    }
+    .brand-footer .bf-role {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom:8px;
+    }
+    .brand-footer a.bf-linkedin {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      background: rgba(10,102,194,0.2);
+      border: 1px solid rgba(10,102,194,0.4);
+      border-radius: 20px;
+      color: #60a5fa;
+      font-size: 11px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .brand-footer a.bf-linkedin:hover {
+      background: rgba(10,102,194,0.35);
+      color: #93c5fd;
+    }
+    .brand-footer .bf-copy {
+      font-size: 10px;
+      color: rgba(255,255,255,0.15);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- BRAND HEADER -->
+  <div class="brand-header">
+    <div class="brand-logo">
+      <!-- PlanrPro SVG Logo Icon — recreated from uploaded logo -->
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gridGradTL" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6366f1"/>
+            <stop offset="100%" stop-color="#818cf8"/>
+          </linearGradient>
+          <linearGradient id="gridGradTR" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#6366f1"/>
+          </linearGradient>
+          <linearGradient id="gridGradBL" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+          <linearGradient id="gridGradBR" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+          <linearGradient id="arrowGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#10b981"/>
+            <stop offset="100%" stop-color="#34d399"/>
+          </linearGradient>
+          <linearGradient id="chartGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#8b5cf6"/>
+            <stop offset="100%" stop-color="#10b981"/>
+          </linearGradient>
+        </defs>
+        <!-- 2x2 grid of rounded squares -->
+        <rect x="2"  y="2"  width="22" height="22" rx="5" fill="url(#gridGradTL)"/>
+        <rect x="28" y="2"  width="22" height="22" rx="5" fill="url(#gridGradTR)"/>
+        <rect x="2"  y="28" width="22" height="22" rx="5" fill="url(#gridGradBL)"/>
+        <rect x="28" y="28" width="22" height="22" rx="5" fill="url(#gridGradBR)"/>
+        <!-- Trending chart line (W-shape across bottom squares) -->
+        <polyline points="4,44 14,32 22,40 30,30 40,44" fill="none" stroke="url(#chartGrad)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+        <!-- Upward arrow -->
+        <line x1="26" y1="38" x2="42" y2="8" stroke="url(#arrowGrad)" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="42,8 34,10 40,16" fill="url(#arrowGrad)"/>
+      </svg>
+
+      <div class="brand-wordmark">
+        <div class="brand-name">PlanrPro <span>— AdMetrics</span></div>
+        <div class="brand-tagline">Performance Marketing Calculator</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active"  onclick="switchTab('calc')">🧮 Calc</button>
+    <button class="tab-btn"         onclick="switchTab('conv')">💱 Currency</button>
+    <button class="tab-btn"         onclick="switchTab('media')">📊 Media Plan</button>
+    <button class="tab-btn"         onclick="switchTab('learn')">📚 Learn</button>
+  </div>
+
+  <!-- ══════════════ CALCULATOR ══════════════ -->
+  <div class="card active" id="tab-calc">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="calc-btn btn-clear" onclick="clearAll()">AC</button>
+      <button class="calc-btn btn-mod"   onclick="toggleSign()">+/−</button>
+      <button class="calc-btn btn-mod"   onclick="percentage()">%</button>
+      <button class="calc-btn btn-op"    onclick="setOperator('/')">÷</button>
+      <button class="calc-btn btn-num" onclick="appendNum('7')">7</button>
+      <button class="calc-btn btn-num" onclick="appendNum('8')">8</button>
+      <button class="calc-btn btn-num" onclick="appendNum('9')">9</button>
+      <button class="calc-btn btn-op"  onclick="setOperator('*')">×</button>
+      <button class="calc-btn btn-num" onclick="appendNum('4')">4</button>
+      <button class="calc-btn btn-num" onclick="appendNum('5')">5</button>
+      <button class="calc-btn btn-num" onclick="appendNum('6')">6</button>
+      <button class="calc-btn btn-op"  onclick="setOperator('-')">−</button>
+      <button class="calc-btn btn-num" onclick="appendNum('1')">1</button>
+      <button class="calc-btn btn-num" onclick="appendNum('2')">2</button>
+      <button class="calc-btn btn-num" onclick="appendNum('3')">3</button>
+      <button class="calc-btn btn-op"  onclick="setOperator('+')">+</button>
+      <button class="calc-btn btn-num span2" onclick="appendNum('0')">0</button>
+      <button class="calc-btn btn-num"       onclick="appendDot()">.</button>
+      <button class="calc-btn btn-eq"        onclick="calculate()">=</button>
+    </div>
+    <button class="send-btn" onclick="sendToConverter()">💱 Convert Result to Currency</button>
+  </div>
+
+  <!-- ══════════════ CURRENCY CONVERTER ══════════════ -->
+  <div class="card" id="tab-conv">
+    <div class="converter-title">💱 <span>Live Currency Converter</span></div>
+    <div class="live-badge">
+      <div class="live-dot" id="live-dot"></div>
+      <span class="live-text" id="live-text">Fetching live rates…</span>
+    </div>
+    <div class="spinner-wrap" id="spinner"><div class="spinner"></div> Loading live rates…</div>
+    <div id="conv-body" style="display:none;">
+      <div class="amount-box">
+        <input type="number" id="conv-amount" placeholder="0" oninput="doConvert()" />
+        <div class="currency-select-wrap" id="from-wrap" onclick="toggleDropdown('from',event)">
+          <span class="flag" id="from-flag">🇺🇸</span>
+          <span class="cur-code" id="from-code">USD</span>
+          <span class="cur-arrow" id="from-arrow">▾</span>
+        </div>
+      </div>
+      <div class="swap-row"><button class="swap-btn" onclick="swapCurrencies()" title="Swap">⇅</button></div>
+      <div class="amount-box">
+        <input type="number" id="conv-result" placeholder="0" readonly style="cursor:default;" />
+        <div class="currency-select-wrap" id="to-wrap" onclick="toggleDropdown('to',event)">
+          <span class="flag" id="to-flag">🇮🇳</span>
+          <span class="cur-code" id="to-code">INR</span>
+          <span class="cur-arrow" id="to-arrow">▾</span>
+        </div>
+      </div>
+      <div class="result-panel" id="result-panel" style="display:none;">
+        <div class="rp-from" id="rp-from"></div>
+        <div class="rp-to"   id="rp-to"></div>
+        <div class="rp-rate" id="rp-rate"></div>
+      </div>
+      <div class="quick-title">⚡ Quick Switch — To Currency</div>
+      <div class="quick-grid" id="quick-grid"></div>
+      <div class="rate-note" id="rate-note">📡 Live rates via ExchangeRate-API</div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MEDIA PLANNER ══════════════ -->
+  <div class="card" id="tab-media">
+    <div class="mp-title">📊 <span>Media Planner</span></div>
+    <div class="mp-subtitle">Performance Marketing Forecast · Google Ads &amp; Meta Ads</div>
+
+    <!-- HOW TO USE GUIDE -->
+    <div class="mp-guide">
+      <div class="mp-guide-title">📖 How to Use</div>
+      <div class="mp-guide-body">
+        <b>1.</b> Pick a platform tab below (Google / Meta / Universal)<br/>
+        <b>2.</b> Type your numbers in the input fields<br/>
+        <b>3.</b> Results update <b>instantly</b> as you type — no button needed!<br/>
+        <b>4.</b> Click <b>"Load Example"</b> to auto-fill tested sample values<br/>
+        <b>5.</b> Only Budget + CPC + CTR + CVR are required for Google; Budget + CPM for Meta
+      </div>
+    </div>
+
+    <!-- Platform tabs -->
+    <div class="mp-platform-bar">
+      <button class="mp-plat-btn google active" onclick="switchPlatform('google')">🔵 Google Ads</button>
+      <button class="mp-plat-btn meta"          onclick="switchPlatform('meta')">🔴 Meta Ads</button>
+      <button class="mp-plat-btn universal"     onclick="switchPlatform('universal')">🟡 Universal</button>
+    </div>
+
+    <!-- ═══ GOOGLE ADS ═══ -->
+    <div class="mp-section active" id="mp-google">
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-blue"></span> Google Ads — Inputs
+          <button class="mp-example-btn" onclick="loadGoogleExample()">⚡ Load Example</button>
+        </div>
+        <div class="mp-row"><div class="mp-label">Total Budget (₹)<small>Monthly ad spend</small></div>
+          <input class="mp-input" id="g-budget" type="number" placeholder="e.g. 30000" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">Avg. CPC (₹)<small>Cost per click · ₹50–₹250 typical</small></div>
+          <input class="mp-input" id="g-cpc" type="number" placeholder="e.g. 130" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">CTR (%)<small>Click-through rate · 3.5–5.5% typical</small></div>
+          <input class="mp-input" id="g-ctr" type="number" placeholder="e.g. 4.2" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">CVR (%)<small>Conversion rate · 3–6% typical</small></div>
+          <input class="mp-input" id="g-cvr" type="number" placeholder="e.g. 4.8" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">Avg. Commission (₹)<small>Per disbursement — optional</small></div>
+          <input class="mp-input" id="g-commission" type="number" placeholder="e.g. 5000" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">Lead→Disburse Rate (%)<small>% of leads that convert — optional</small></div>
+          <input class="mp-input" id="g-ldr" type="number" placeholder="e.g. 8" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">Quality Score (1–10)<small>Google's ad relevance score — optional</small></div>
+          <input class="mp-input" id="g-qs" type="number" placeholder="e.g. 7" min="1" max="10" oninput="calcGoogle()" /></div>
+        <div class="mp-row"><div class="mp-label">Impression Share (%)<small>% of eligible impr. won — optional</small></div>
+          <input class="mp-input" id="g-is" type="number" placeholder="e.g. 55" oninput="calcGoogle()" /></div>
+        <button class="mp-reset-btn" onclick="resetGoogle()">↺ Reset</button>
+      </div>
+
+      <!-- Google Outputs — ALWAYS VISIBLE -->
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-green"></span> Google Ads — Forecast Output</div>
+        <div class="mp-need-hint" id="g-hint">👆 Enter Budget + CPC + CTR + CVR above to see your forecast</div>
+        <div id="g-results">
+          <div class="mp-out-row"><div class="mp-out-label">Clicks<span class="formula-tag">Budget ÷ CPC</span></div><div class="mp-out-value" id="g-out-clicks">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Impressions<span class="formula-tag">Clicks ÷ CTR</span></div><div class="mp-out-value" id="g-out-impr">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Leads<span class="formula-tag">Clicks × CVR</span></div><div class="mp-out-value highlight" id="g-out-leads">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPL — Cost Per Lead<span class="formula-tag">Budget ÷ Leads</span></div><div class="mp-out-value highlight" id="g-out-cpl">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPL Shortcut Check<span class="formula-tag">CPC ÷ CVR%</span></div><div class="mp-out-value" id="g-out-cpl2">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Disbursements<span class="formula-tag">Leads × Lead→Disburse Rate</span></div><div class="mp-out-value" id="g-out-disb">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Revenue Forecast (₹)<span class="formula-tag">Disbursements × Commission</span></div><div class="mp-out-value" id="g-out-rev">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">ROAS<span class="formula-tag">Revenue ÷ Ad Spend</span></div><div class="mp-out-value" id="g-out-roas">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Break-even CPL (₹)<span class="formula-tag">Commission × Lead→Disburse Rate</span></div><div class="mp-out-value" id="g-out-becpl">—</div></div>
+
+          <hr class="mp-divider"/>
+          <div class="mp-group-title" style="margin-bottom:8px;"><span class="dot dot-purple"></span> KPI Health Check</div>
+          <div class="mp-out-row"><div class="mp-out-label">CTR Health<small>Benchmark: 3.5–5.5%</small></div><div class="mp-out-value" id="g-kpi-ctr">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CVR Health<small>Benchmark: 3–6%</small></div><div class="mp-out-value" id="g-kpi-cvr">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Quality Score<small>Benchmark: 6–7+ healthy</small></div><div class="mp-out-value" id="g-kpi-qs">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Impression Share<small>Benchmark: 40–65%</small></div><div class="mp-out-value" id="g-kpi-is">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPL vs Break-even</div><div class="mp-out-value" id="g-kpi-cpl">—</div></div>
+
+          <hr class="mp-divider"/>
+          <div class="mp-group-title" style="margin-bottom:8px;"><span class="dot dot-yellow"></span> 3-Scenario Stress Test</div>
+          <table class="scenario-table">
+            <thead><tr><th>Scenario</th><th>CPC</th><th>CVR</th><th>Leads</th><th>CPL</th></tr></thead>
+            <tbody>
+              <tr class="cons"><td>🔴 Conservative</td><td id="g-s-cpc-c">—</td><td id="g-s-cvr-c">—</td><td id="g-s-leads-c">—</td><td id="g-s-cpl-c">—</td></tr>
+              <tr class="base"><td>🟢 Base</td><td id="g-s-cpc-b">—</td><td id="g-s-cvr-b">—</td><td id="g-s-leads-b">—</td><td id="g-s-cpl-b">—</td></tr>
+              <tr class="opti"><td>🔵 Optimistic</td><td id="g-s-cpc-o">—</td><td id="g-s-cvr-o">—</td><td id="g-s-leads-o">—</td><td id="g-s-cpl-o">—</td></tr>
+            </tbody>
+          </table>
+        </div><!-- /g-results -->
+      </div>
+    </div><!-- /mp-google -->
+
+    <!-- ═══ META ADS ═══ -->
+    <div class="mp-section" id="mp-meta">
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-pink"></span> Meta Ads — Inputs
+          <button class="mp-example-btn" onclick="loadMetaExample()">⚡ Load Example</button>
+        </div>
+        <div class="mp-row"><div class="mp-label">Total Budget (₹)<small>Monthly ad spend</small></div>
+          <input class="mp-input" id="m-budget" type="number" placeholder="e.g. 40000" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">CPM (₹)<small>Cost per 1,000 impressions · ₹60–₹180 typical</small></div>
+          <input class="mp-input" id="m-cpm" type="number" placeholder="e.g. 110" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">CTR (%)<small>Link click-through rate · 0.8–2.5% typical</small></div>
+          <input class="mp-input" id="m-ctr" type="number" placeholder="e.g. 1.2" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">Lead Rate (%)<small>Leads per impression · 0.5–2% typical</small></div>
+          <input class="mp-input" id="m-lr" type="number" placeholder="e.g. 0.9" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">Frequency<small>Avg. times one user sees ad · 1.5–3.5 typical</small></div>
+          <input class="mp-input" id="m-freq" type="number" placeholder="e.g. 2.5" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">Avg. Commission (₹)<small>Per disbursement — optional</small></div>
+          <input class="mp-input" id="m-commission" type="number" placeholder="e.g. 5000" oninput="calcMeta()" /></div>
+        <div class="mp-row"><div class="mp-label">Lead→Disburse Rate (%)<small>% of leads that convert — optional</small></div>
+          <input class="mp-input" id="m-ldr" type="number" placeholder="e.g. 8" oninput="calcMeta()" /></div>
+        <button class="mp-reset-btn" onclick="resetMeta()">↺ Reset</button>
+      </div>
+
+      <!-- Meta Outputs — ALWAYS VISIBLE -->
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-green"></span> Meta Ads — Forecast Output</div>
+        <div class="mp-need-hint" id="m-hint">👆 Enter Budget + CPM above to see your forecast</div>
+        <div id="m-results">
+          <div class="mp-out-row"><div class="mp-out-label">Impressions<span class="formula-tag">(Budget ÷ CPM) × 1,000</span></div><div class="mp-out-value" id="m-out-impr">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Reach (Unique Users)<span class="formula-tag">Impressions ÷ Frequency</span></div><div class="mp-out-value" id="m-out-reach">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Clicks<span class="formula-tag">Impressions × CTR</span></div><div class="mp-out-value" id="m-out-clicks">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPC (₹)<span class="formula-tag">CPM ÷ (CTR × 10)</span></div><div class="mp-out-value" id="m-out-cpc">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Leads (Lead Ad)<span class="formula-tag">Impressions × Lead Rate</span></div><div class="mp-out-value highlight" id="m-out-leads">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPL (₹)<span class="formula-tag">Budget ÷ Leads</span></div><div class="mp-out-value highlight" id="m-out-cpl">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Disbursements<span class="formula-tag">Leads × Lead→Disburse Rate</span></div><div class="mp-out-value" id="m-out-disb">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Revenue Forecast (₹)<span class="formula-tag">Disbursements × Commission</span></div><div class="mp-out-value" id="m-out-rev">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">ROAS<span class="formula-tag">Revenue ÷ Ad Spend</span></div><div class="mp-out-value" id="m-out-roas">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">eCPM (₹)<span class="formula-tag">(Spend ÷ Impressions) × 1,000</span></div><div class="mp-out-value" id="m-out-ecpm">—</div></div>
+
+          <hr class="mp-divider"/>
+          <div class="mp-group-title" style="margin-bottom:8px;"><span class="dot dot-purple"></span> KPI Health Check</div>
+          <div class="mp-out-row"><div class="mp-out-label">CPM Health<small>Benchmark: ₹60–₹180</small></div><div class="mp-out-value" id="m-kpi-cpm">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CTR Health<small>Benchmark: 0.8–2.5%</small></div><div class="mp-out-value" id="m-kpi-ctr">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">Frequency Health<small>Benchmark: 1.5–3.5x</small></div><div class="mp-out-value" id="m-kpi-freq">—</div></div>
+          <div class="mp-out-row"><div class="mp-out-label">CPL Health<small>Benchmark: ₹120–₹400</small></div><div class="mp-out-value" id="m-kpi-cpl">—</div></div>
+
+          <hr class="mp-divider"/>
+          <div class="mp-group-title" style="margin-bottom:8px;"><span class="dot dot-yellow"></span> 3-Scenario Stress Test</div>
+          <table class="scenario-table">
+            <thead><tr><th>Scenario</th><th>CPM</th><th>Lead Rate</th><th>Leads</th><th>CPL</th></tr></thead>
+            <tbody>
+              <tr class="cons"><td>🔴 Conservative</td><td id="m-s-cpm-c">—</td><td id="m-s-lr-c">—</td><td id="m-s-leads-c">—</td><td id="m-s-cpl-c">—</td></tr>
+              <tr class="base"><td>🟢 Base</td><td id="m-s-cpm-b">—</td><td id="m-s-lr-b">—</td><td id="m-s-leads-b">—</td><td id="m-s-cpl-b">—</td></tr>
+              <tr class="opti"><td>🔵 Optimistic</td><td id="m-s-cpm-o">—</td><td id="m-s-lr-o">—</td><td id="m-s-leads-o">—</td><td id="m-s-cpl-o">—</td></tr>
+            </tbody>
+          </table>
+        </div><!-- /m-results -->
+      </div>
+    </div><!-- /mp-meta -->
+
+    <!-- ═══ UNIVERSAL ═══ -->
+    <div class="mp-section" id="mp-universal">
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-yellow"></span> ROAS &amp; ROI Calculator
+          <button class="mp-example-btn" onclick="loadUniExample()">⚡ Load Example</button>
+        </div>
+        <div class="mp-row"><div class="mp-label">Revenue Generated (₹)</div>
+          <input class="mp-input" id="u-revenue" type="number" placeholder="e.g. 500000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Ad Spend (₹)</div>
+          <input class="mp-input" id="u-spend" type="number" placeholder="e.g. 100000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Total Cost incl. Ops (₹)<small>Ad spend + salaries + tools</small></div>
+          <input class="mp-input" id="u-totalcost" type="number" placeholder="e.g. 150000" oninput="calcUniversal()" /></div>
+        <div class="mp-out-row" style="margin-top:10px;"><div class="mp-out-label">ROAS<span class="formula-tag">Revenue ÷ Ad Spend</span></div><div class="mp-out-value highlight" id="u-out-roas">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">ROI (%)<span class="formula-tag">((Revenue − Total Cost) ÷ Total Cost) × 100</span></div><div class="mp-out-value highlight" id="u-out-roi">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">Profit / Loss (₹)</div><div class="mp-out-value" id="u-out-profit">—</div></div>
+      </div>
+
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-green"></span> CPL Shortcut Formula</div>
+        <div class="mp-row"><div class="mp-label">CPC (₹)<small>Cost per click</small></div>
+          <input class="mp-input" id="u-cpc" type="number" placeholder="e.g. 200" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">CVR (%)<small>Conversion rate</small></div>
+          <input class="mp-input" id="u-cvr" type="number" placeholder="e.g. 5" oninput="calcUniversal()" /></div>
+        <div class="mp-out-row" style="margin-top:10px;"><div class="mp-out-label">CPL<span class="formula-tag">CPC ÷ CVR% (e.g. ₹200 ÷ 0.05 = ₹4,000)</span></div><div class="mp-out-value highlight" id="u-out-cpl">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">To halve CPL → CVR needed</div><div class="mp-out-value" id="u-out-halvecvr">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">To halve CPL → CPC needed (₹)</div><div class="mp-out-value" id="u-out-halvecpc">—</div></div>
+      </div>
+
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-purple"></span> CPA &amp; Conversion Calculator</div>
+        <div class="mp-row"><div class="mp-label">Total Budget (₹)</div>
+          <input class="mp-input" id="u-budget2" type="number" placeholder="e.g. 100000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Total Acquisitions / Leads</div>
+          <input class="mp-input" id="u-acq" type="number" placeholder="e.g. 50" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Total Clicks</div>
+          <input class="mp-input" id="u-clicks2" type="number" placeholder="e.g. 1000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Total Impressions</div>
+          <input class="mp-input" id="u-impr2" type="number" placeholder="e.g. 25000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Total Reach</div>
+          <input class="mp-input" id="u-reach2" type="number" placeholder="e.g. 10000" oninput="calcUniversal()" /></div>
+        <div class="mp-out-row" style="margin-top:10px;"><div class="mp-out-label">CPA / CPL<span class="formula-tag">Budget ÷ Acquisitions</span></div><div class="mp-out-value highlight" id="u-out-cpa">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">CVR (%)<span class="formula-tag">(Conversions ÷ Clicks) × 100</span></div><div class="mp-out-value" id="u-out-cvr2">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">CTR (%)<span class="formula-tag">(Clicks ÷ Impressions) × 100</span></div><div class="mp-out-value" id="u-out-ctr2">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">CPC (₹)<span class="formula-tag">Budget ÷ Clicks</span></div><div class="mp-out-value" id="u-out-cpc2">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">eCPM (₹)<span class="formula-tag">(Budget ÷ Impressions) × 1,000</span></div><div class="mp-out-value" id="u-out-ecpm2">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">Frequency<span class="formula-tag">Impressions ÷ Reach</span></div><div class="mp-out-value" id="u-out-freq2">—</div></div>
+      </div>
+
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-red"></span> Break-even CPL &amp; LTV</div>
+        <div class="mp-row"><div class="mp-label">Avg. Commission / LTV (₹)<small>Revenue per converted lead</small></div>
+          <input class="mp-input" id="u-ltv" type="number" placeholder="e.g. 8000" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Lead→Disbursement Rate (%)<small>% of leads that become customers</small></div>
+          <input class="mp-input" id="u-ldr2" type="number" placeholder="e.g. 10" oninput="calcUniversal()" /></div>
+        <div class="mp-out-row" style="margin-top:10px;"><div class="mp-out-label">Break-even CPL (₹)<span class="formula-tag">Commission × Lead→Disburse Rate</span></div><div class="mp-out-value highlight" id="u-out-becpl">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">Max Safe CPL (70% of break-even)</div><div class="mp-out-value" id="u-out-safecpl">—</div></div>
+      </div>
+
+      <div class="mp-group">
+        <div class="mp-group-title"><span class="dot dot-blue"></span> Quality Score Impact Estimator</div>
+        <div class="mp-row"><div class="mp-label">Current CPC (₹)</div>
+          <input class="mp-input" id="u-cur-cpc" type="number" placeholder="e.g. 200" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Current Quality Score (1–10)</div>
+          <input class="mp-input" id="u-cur-qs" type="number" placeholder="e.g. 5" min="1" max="10" oninput="calcUniversal()" /></div>
+        <div class="mp-row"><div class="mp-label">Target Quality Score (1–10)</div>
+          <input class="mp-input" id="u-new-qs" type="number" placeholder="e.g. 7" min="1" max="10" oninput="calcUniversal()" /></div>
+        <div class="mp-out-row" style="margin-top:10px;"><div class="mp-out-label">Estimated New CPC (₹)<span class="formula-tag">Current CPC × (Current QS ÷ New QS)</span></div><div class="mp-out-value highlight" id="u-out-newcpc">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">CPC Reduction (%)</div><div class="mp-out-value" id="u-out-cpcdrop">—</div></div>
+        <div class="mp-out-row"><div class="mp-out-label">Extra clicks for same budget</div><div class="mp-out-value" id="u-out-extracl">—</div></div>
+      </div>
+
+      <button class="mp-reset-btn" onclick="resetUniversal()" style="margin-top:4px;">↺ Reset Universal</button>
+    </div><!-- /mp-universal -->
+
+  </div><!-- /tab-media -->
+
+  <!-- ══════════════ LEARN TAB ══════════════ -->
+  <div class="card" id="tab-learn">
+    <div class="learn-header">
+      <h2>📚 <span>Media Planning</span> Guide</h2>
+      <p>Agency-grade foundations · Read before you calculate</p>
+    </div>
+
+    <!-- Sub-tab navigation -->
+    <div class="learn-sub-bar">
+      <button class="learn-sub-btn active" data-sub="foundations" onclick="switchLearn('foundations')">🏗 Foundations</button>
+      <button class="learn-sub-btn" data-sub="terminology" onclick="switchLearn('terminology')">📖 Glossary</button>
+      <button class="learn-sub-btn" data-sub="process" onclick="switchLearn('process')">7️⃣ 7-Step Process</button>
+      <button class="learn-sub-btn" data-sub="formulas" onclick="switchLearn('formulas')">🧮 Formulas</button>
+      <button class="learn-sub-btn" data-sub="kpis" onclick="switchLearn('kpis')">🎯 KPIs</button>
+      <button class="learn-sub-btn" data-sub="forecasting" onclick="switchLearn('forecasting')">📈 Forecasting</button>
+      <button class="learn-sub-btn" data-sub="sources" onclick="switchLearn('sources')">🔍 Benchmarks</button>
+    </div>
+
+    <!-- ═══ FOUNDATIONS ═══ -->
+    <div class="learn-section active" id="learn-foundations">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🏗</span> What is Media Planning?</div>
+        <p class="lp">Media planning is the process of determining <strong>where, when, how much, and to whom</strong> you will serve paid advertisements — and forecasting exactly what business outcomes that investment will produce.</p>
+        <p class="lp">An agency-grade media plan is not just a budget table. It is a <strong>mathematical document</strong> that shows: the benchmark assumptions going in, every formula used, and the output metrics that prove the plan is grounded in reality.</p>
+        <div class="lbox">
+          <b>A media plan answers 5 questions precisely:</b><br/>
+          Who are we reaching? · Where will we reach them? · How much will we spend? · What will we get? · How will we measure it?
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔺</span> The Three Layers of a Professional Media Plan</div>
+        <div class="layer-row">
+          <div class="layer-card">
+            <div class="ln">1</div>
+            <div class="lt">Strategy Layer</div>
+            <div class="ld">Audience, platform, objective, messaging. The <em>why</em> and <em>who</em>.</div>
+          </div>
+          <div class="layer-card">
+            <div class="ln">2</div>
+            <div class="lt">Tactical Layer</div>
+            <div class="ld">Campaign structure, ad formats, bid strategy, geo. The <em>how</em> and <em>when</em>.</div>
+          </div>
+          <div class="layer-card">
+            <div class="ln">3</div>
+            <div class="lt">Forecasting Layer</div>
+            <div class="ld">Budget → Impressions → Clicks → Leads → Revenue. The <em>how much</em>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">⚖️</span> Bad Plan vs. Good Plan</div>
+        <div class="lbox red">
+          <b>🔴 Bad Plan says:</b><br/>
+          "We'll spend ₹2L/month and expect 100 leads." No formulas. No benchmark sources. No funnel breakdown. No KPIs. Just numbers from thin air.
+        </div>
+        <div class="lbox green">
+          <b>🟢 Good Plan says:</b><br/>
+          "At a ₹2L budget, assuming CPC of ₹180 (Q1 2026 India Home Loan benchmark), we'll generate 1,111 clicks at 4.2% CTR = 26,462 impressions. At 5.2% CVR we get 57 leads at a CPL of ₹3,508. <em>Formula: Leads = Budget ÷ CPC × CVR.</em>"
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">📄</span> What Goes in the Final Document</div>
+        <table class="lref-table">
+          <thead><tr><th>Section</th><th>What it contains</th></tr></thead>
+          <tbody>
+            <tr><td>Executive Summary</td><td>Objective, budget, expected leads, CPL, timeline — 3–5 bullets</td></tr>
+            <tr><td>Audience Overview</td><td>Personas, demographics, intent signals per campaign</td></tr>
+            <tr><td>Platform Structure</td><td>Platform → Campaign → Ad Group → Ad Format hierarchy</td></tr>
+            <tr><td>Budget Allocation</td><td>Total split by platform, product, city, month — with %</td></tr>
+            <tr><td>Benchmark Assumptions</td><td>CPC, CPM, CTR, CVR per campaign — with source cited</td></tr>
+            <tr><td>Forecast</td><td>Impressions, Clicks, Leads, CPL — with formula shown</td></tr>
+            <tr><td>KPIs &amp; Success Metrics</td><td>Primary + secondary KPI per campaign, measurement method</td></tr>
+            <tr><td>Monthly Phasing</td><td>How budget, targets, strategy shift M1 → M2 → M3</td></tr>
+            <tr><td>Risk &amp; Assumptions</td><td>What would cause the forecast to miss, and by how much</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /learn-foundations -->
+
+    <!-- ═══ TERMINOLOGY ═══ -->
+    <div class="learn-section" id="learn-terminology">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">📖</span> Key Terms You Must Know Cold</div>
+        <div class="term-grid">
+          <div class="term-row"><span class="term-key">CTR</span><span class="term-full">Click-Through Rate</span><span class="term-desc">% of impressions that became clicks</span></div>
+          <div class="term-row"><span class="term-key">CPC</span><span class="term-full">Cost Per Click</span><span class="term-desc">What you paid per click on your ad</span></div>
+          <div class="term-row"><span class="term-key">CPM</span><span class="term-full">Cost Per 1,000 Impr.</span><span class="term-desc">What you paid per 1,000 impressions — Meta's primary metric</span></div>
+          <div class="term-row"><span class="term-key">CVR</span><span class="term-full">Conversion Rate</span><span class="term-desc">% of clicks that completed the goal (form fill, call)</span></div>
+          <div class="term-row"><span class="term-key">CPL</span><span class="term-full">Cost Per Lead</span><span class="term-desc">What you paid per lead generated</span></div>
+          <div class="term-row"><span class="term-key">CPA</span><span class="term-full">Cost Per Acquisition</span><span class="term-desc">What you paid per customer acquired</span></div>
+          <div class="term-row"><span class="term-key">ROAS</span><span class="term-full">Return on Ad Spend</span><span class="term-desc">Revenue generated per ₹1 of ad spend</span></div>
+          <div class="term-row"><span class="term-key">ROI</span><span class="term-full">Return on Investment</span><span class="term-desc">Net profit as % of total investment</span></div>
+          <div class="term-row"><span class="term-key">LTV</span><span class="term-full">Lifetime Value</span><span class="term-desc">Total revenue a customer generates over their lifetime</span></div>
+          <div class="term-row"><span class="term-key">IS</span><span class="term-full">Impression Share</span><span class="term-desc">% of eligible impressions you actually won (Google)</span></div>
+          <div class="term-row"><span class="term-key">QS</span><span class="term-full">Quality Score</span><span class="term-desc">Google's 1–10 relevance score that determines real CPC</span></div>
+          <div class="term-row"><span class="term-key">eCPM</span><span class="term-full">Effective CPM</span><span class="term-desc">(Total Spend ÷ Total Impressions) × 1,000</span></div>
+          <div class="term-row"><span class="term-key">Reach</span><span class="term-full">—</span><span class="term-desc">Unique users who saw your ad</span></div>
+          <div class="term-row"><span class="term-key">Freq.</span><span class="term-full">Frequency</span><span class="term-desc">Average times one user saw your ad</span></div>
+        </div>
+      </div>
+    </div><!-- /learn-terminology -->
+
+    <!-- ═══ 7-STEP PROCESS ═══ -->
+    <div class="learn-section" id="learn-process">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">7️⃣</span> The 7-Step Media Planning Process</div>
+        <p class="lp">Every professional media plan follows this sequence. <strong>Skip a step and your plan will have holes.</strong></p>
+        <ul class="step-list">
+          <li>
+            <div class="step-num">1</div>
+            <div><b>Define the Campaign Objective</b>Every campaign must have ONE primary objective: Awareness (impressions/reach), Consideration (traffic/engagement), or Conversion (leads/sales). This determines platform, format, bid strategy, and KPI.</div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div><b>Define the Audience</b>Who specifically are you reaching? Age, income, geography, intent signal, device preference, life stage. Each persona = a separate targeting layer in your plan.</div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div><b>Select Platforms &amp; Formats</b>Match platform to where your audience is AND their intent level. High commercial intent → Google Search. Interest/demographic targeting → Meta. Remarketing → Google Display + Meta Retargeting.</div>
+          </li>
+          <li>
+            <div class="step-num">4</div>
+            <div><b>Set the Budget &amp; Allocate It</b>Total budget → split by platform → split by product/campaign → split by city. Justify allocation with search volume (Google) or audience size (Meta), product LTV, and city-level CPC/CPM benchmarks.</div>
+          </li>
+          <li>
+            <div class="step-num">5</div>
+            <div><b>Research Benchmark Inputs</b>This is the <em>foundation</em> of your forecast. You MUST source: CPC/CPM benchmarks, CTR benchmarks, CVR benchmarks, and seasonality factors. Always cite your source.</div>
+          </li>
+          <li>
+            <div class="step-num">6</div>
+            <div><b>Build the Forecast Using Formulas</b>Apply benchmark inputs to your budget using the correct formula chain. Show EVERY step. Never present a final number without the formula that produced it.</div>
+          </li>
+          <li>
+            <div class="step-num">7</div>
+            <div><b>Define KPIs, Tracking &amp; Reporting</b>For each campaign define: primary KPI, secondary KPIs, measurement method (GTM, GA4, CRM), reporting frequency, and the performance threshold that triggers optimization. Without this, the plan has no accountability layer.</div>
+          </li>
+        </ul>
+      </div>
+    </div><!-- /learn-process -->
+
+    <!-- ═══ FORMULAS ═══ -->
+    <div class="learn-section" id="learn-formulas">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔵</span> Google Ads — Formula Chain</div>
+        <p class="lp">Google Search is <strong>CPC-based</strong>. Start with budget, derive clicks, then everything else from clicks.</p>
+        <div class="funnel-flow">
+          <div class="funnel-step">Budget ÷ CPC = <strong>Clicks</strong><small>e.g. ₹30,000 ÷ ₹130 = 230 clicks</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Clicks ÷ CTR = <strong>Impressions</strong><small>e.g. 230 ÷ 0.042 = 5,476 impressions</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Clicks × CVR = <strong>Leads</strong><small>e.g. 230 × 0.048 = 11 leads</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Budget ÷ Leads = <strong>CPL</strong><small>e.g. ₹30,000 ÷ 11 = ₹2,727 CPL</small></div>
+        </div>
+        <div class="formula-block">
+          <div class="formula-label">Additional Google formulas</div>
+          <div class="formula-line">CPL shortcut = CPC ÷ CVR%<span class="fl"> → ₹130 ÷ 0.048 = ₹2,708 ✓</span></div>
+          <div class="formula-line">Actual CPC = (Competitor Ad Rank ÷ QS) + ₹0.01</div>
+          <div class="formula-line">Ad Rank = Max Bid × QS × Extension Impact</div>
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔴</span> Meta Ads — Formula Chain</div>
+        <p class="lp">Meta is <strong>CPM-based</strong>. Start with budget, derive impressions, then clicks and leads from impressions.</p>
+        <div class="funnel-flow">
+          <div class="funnel-step">(Budget ÷ CPM) × 1,000 = <strong>Impressions</strong><small>e.g. (₹40,000 ÷ ₹110) × 1,000 = 363,636</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Impressions × CTR = <strong>Clicks</strong><small>e.g. 363,636 × 0.012 = 4,364 clicks</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Impressions × Lead Rate = <strong>Leads</strong><small>e.g. 363,636 × 0.009 = 3,273 leads</small></div>
+          <div class="funnel-arrow">↓</div>
+          <div class="funnel-step">Budget ÷ Leads = <strong>CPL</strong><small>e.g. ₹40,000 ÷ 3,273 = ₹12 CPL</small></div>
+        </div>
+        <div class="formula-block">
+          <div class="formula-label">Additional Meta formulas</div>
+          <div class="formula-line">Reach = Impressions ÷ Frequency</div>
+          <div class="formula-line">CPC = CPM ÷ (CTR × 10)</div>
+          <div class="formula-line">Lead Rate = Form Open Rate × Form Submit Rate<span class="fl"> → typically 0.5–2%</span></div>
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🟡</span> Universal Formulas</div>
+        <div class="formula-block">
+          <div class="formula-label">Works on all platforms</div>
+          <div class="formula-line">CVR (%) = (Conversions ÷ Clicks) × 100</div>
+          <div class="formula-line">CPA = Budget ÷ Acquisitions</div>
+          <div class="formula-line">ROAS = Revenue Generated ÷ Ad Spend</div>
+          <div class="formula-line">ROI (%) = ((Revenue − Total Cost) ÷ Total Cost) × 100</div>
+          <div class="formula-line">Frequency = Impressions ÷ Reach</div>
+          <div class="formula-line">eCPM = (Total Spend ÷ Total Impressions) × 1,000</div>
+          <div class="formula-line">Break-even CPL = Commission × Lead→Disburse Rate</div>
+          <div class="formula-line">Revenue = Leads × Lead→Disburse Rate × Avg. Commission</div>
+        </div>
+        <div class="lbox yellow">
+          <b>⚡ CPL Shortcut (most useful in client conversations):</b><br/>
+          CPL = CPC ÷ CVR<br/>
+          e.g. ₹200 CPC ÷ 5% CVR = <em>₹4,000 CPL</em><br/><br/>
+          To halve CPL → either halve CPC (hard, needs QS improvement) OR double CVR (easier, landing page optimisation)
+        </div>
+      </div>
+    </div><!-- /learn-formulas -->
+
+    <!-- ═══ KPIs ═══ -->
+    <div class="learn-section" id="learn-kpis">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🎯</span> KPIs vs. Metrics — The Difference</div>
+        <p class="lp">A <strong>metric</strong> is any data point you can measure. A <strong>KPI</strong> is the specific metric your campaign is judged against — it has a target, a timeframe, and an owner.</p>
+        <div class="lbox red">
+          <b>Common mistake:</b> Listing 12 KPIs. A campaign should have ONE primary KPI (the north star) and 3–5 secondary KPIs. More than that and nothing gets optimized.
+        </div>
+        <div class="lbox">
+          <b>Primary KPI:</b> Cost Per Qualified Lead (CPQL) — a lead that passes basic qualification<br/>
+          <b>Secondary KPIs:</b> CPL, CTR, CVR, Impression Share — the levers that drive the primary KPI<br/>
+          <b>Business KPIs:</b> Disbursements, Commission, ROAS — require offline conversion import
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔵</span> Google Ads KPI Reference — India Finance</div>
+        <table class="lref-table">
+          <thead><tr><th>KPI</th><th>Formula</th><th>Benchmark</th><th>Optimization Lever</th></tr></thead>
+          <tbody>
+            <tr><td>CPL ★</td><td>Budget ÷ Leads</td><td>₹300–₹1,200</td><td>Improve CVR or reduce CPC</td></tr>
+            <tr><td>CTR</td><td>(Clicks ÷ Impr.) × 100</td><td>3.5–5.5%</td><td>Improve ad copy relevance</td></tr>
+            <tr><td>CVR</td><td>(Leads ÷ Clicks) × 100</td><td>3–6%</td><td>Improve LP speed, form, headline</td></tr>
+            <tr><td>CPC</td><td>Budget ÷ Clicks</td><td>₹50–₹250</td><td>Improve Quality Score</td></tr>
+            <tr><td>Quality Score</td><td>1–10 (Google)</td><td>6–7/10</td><td>CTR + ad relevance + LP experience</td></tr>
+            <tr><td>Impression Share</td><td>(Won ÷ Eligible) × 100</td><td>40–65%</td><td>Increase bids + improve QS</td></tr>
+            <tr><td>Lost IS (Rank)</td><td>% lost due to Ad Rank</td><td>&lt;25%</td><td>Raise bids or improve QS</td></tr>
+            <tr><td>Lead Quality Rate</td><td>Qualified ÷ Total × 100</td><td>35–55%</td><td>Tighten keywords + form fields</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔴</span> Meta Ads KPI Reference — India Finance</div>
+        <table class="lref-table">
+          <thead><tr><th>KPI</th><th>Formula</th><th>Benchmark</th><th>Optimization Lever</th></tr></thead>
+          <tbody>
+            <tr><td>CPL ★</td><td>Budget ÷ Leads</td><td>₹120–₹400</td><td>Improve creative or targeting</td></tr>
+            <tr><td>CPM</td><td>(Budget ÷ Impr.) × 1,000</td><td>₹60–₹180</td><td>Broaden audience, improve relevance</td></tr>
+            <tr><td>CTR (Link)</td><td>(Clicks ÷ Impr.) × 100</td><td>0.8–2.5%</td><td>Improve creative hook and CTA</td></tr>
+            <tr><td>Frequency</td><td>Impressions ÷ Reach</td><td>1.5–3.5×</td><td>Expand audience or rotate creatives</td></tr>
+            <tr><td>Lead Form CVR</td><td>Leads ÷ Form Opens × 100</td><td>50–75%</td><td>Reduce fields, pre-fill where possible</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🏦</span> Business-Level KPIs (CRM Tracking)</div>
+        <table class="lref-table">
+          <thead><tr><th>KPI</th><th>Formula</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td>Lead→Login Rate</td><td>Logins ÷ Total Leads × 100</td><td>Quality filter — are leads submitting full application?</td></tr>
+            <tr><td>Login→Sanction</td><td>Sanctions ÷ Logins × 100</td><td>Lender match quality indicator</td></tr>
+            <tr><td>Sanction→Disburse</td><td>Disbursements ÷ Sanctions × 100</td><td>Final revenue conversion</td></tr>
+            <tr><td>Cost per Disburse</td><td>Total Ad Spend ÷ Disbursements</td><td>True ROI metric for DSA</td></tr>
+            <tr><td>ROAS</td><td>Total Commission ÷ Ad Spend</td><td>Ultimate accountability metric</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /learn-kpis -->
+
+    <!-- ═══ FORECASTING ═══ -->
+    <div class="learn-section" id="learn-forecasting">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">📈</span> What Forecasting Really Is</div>
+        <p class="lp">Forecasting is <strong>not guessing</strong>. It is applying verified benchmarks to your budget using the correct formula chain, then stress-testing the output at Conservative, Base, and Optimistic scenarios.</p>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔵</span> Google Ads Worked Example</div>
+        <p class="lp">Personal Loan campaign, Bengaluru, Month 1 · Budget = ₹30,000</p>
+        <div class="formula-block">
+          <div class="formula-line">Clicks   = ₹30,000 ÷ ₹130 (CPC) = <strong style="color:#10b981">230 clicks</strong></div>
+          <div class="formula-line">Impr.    = 230 ÷ 0.042 (CTR)    = <strong style="color:#10b981">5,476 impr.</strong></div>
+          <div class="formula-line">Leads    = 230 × 0.048 (CVR)    = <strong style="color:#10b981">11 leads</strong></div>
+          <div class="formula-line">CPL      = ₹30,000 ÷ 11         = <strong style="color:#10b981">₹2,727</strong></div>
+          <div class="formula-line">CPL check = ₹130 ÷ 0.048       = <strong style="color:#a78bfa">₹2,708 ✓</strong></div>
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔴</span> Meta Ads Worked Example</div>
+        <p class="lp">Home Loan Lead Ad, Bengaluru + Mumbai, Month 1 · Budget = ₹40,000</p>
+        <div class="formula-block">
+          <div class="formula-line">Impr.    = (₹40,000 ÷ ₹110) × 1000 = <strong style="color:#10b981">363,636</strong></div>
+          <div class="formula-line">Clicks   = 363,636 × 0.012 (CTR)   = <strong style="color:#10b981">4,364</strong></div>
+          <div class="formula-line">Leads    = 363,636 × 0.009 (LR)    = <strong style="color:#10b981">3,273</strong></div>
+          <div class="formula-line">CPL      = ₹40,000 ÷ 3,273         = <strong style="color:#10b981">₹12.22</strong></div>
+        </div>
+        <p class="lp" style="margin-top:8px;">Meta Lead Ads use a <em>lead rate</em> (leads per impression) because the form opens inside the platform — no landing page click required. Lead Rate = form open rate × form submit rate. Typically <strong>0.5–1.5%</strong> for India finance.</p>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">⚠️</span> 3-Scenario Stress Test — The Professional Standard</div>
+        <p class="lp">Always present Conservative, Base, and Optimistic scenarios. This demonstrates competence and protects you when reality differs from plan.</p>
+        <table class="lscen-table">
+          <thead><tr><th>Scenario</th><th>CPC assumption</th><th>CVR assumption</th><th>When to use</th></tr></thead>
+          <tbody>
+            <tr><td>🔴 Conservative</td><td>Upper range +20%</td><td>Lower range −20%</td><td>New account, Month 1</td></tr>
+            <tr><td>🟢 Base</td><td>Mid-range benchmark</td><td>Mid-range benchmark</td><td>Month 2–3 with data</td></tr>
+            <tr><td>🔵 Optimistic</td><td>Lower range benchmark</td><td>Upper range benchmark</td><td>QS optimized, M4+</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">💥</span> Sensitivity — How Changes Impact Your Plan</div>
+        <table class="lref-table">
+          <thead><tr><th>Change</th><th>Impact on Clicks/Leads</th><th>Impact on CPL</th></tr></thead>
+          <tbody>
+            <tr><td>CPC goes up 20%</td><td>Clicks fall 16.7%</td><td>CPL rises 20%</td></tr>
+            <tr><td>CVR drops 5% → 3%</td><td>Leads fall 40%</td><td>CPL rises 66.7%</td></tr>
+            <tr><td>QS improves 5 → 7</td><td>+30–40% more clicks</td><td>CPL drops 30–40%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /learn-forecasting -->
+
+    <!-- ═══ BENCHMARK SOURCES ═══ -->
+    <div class="learn-section" id="learn-sources">
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">🔍</span> Where to Source Benchmark Inputs</div>
+        <p class="lp">The foundation of any forecast is verified benchmarks. Never use made-up numbers — always cite your source.</p>
+        <div class="source-grid">
+          <div class="source-card">
+            <div class="sc-name">🔵 Google Keyword Planner</div>
+            <div class="sc-desc">Search volume, CPC range, competition level per keyword</div>
+            <div class="sc-use">→ Google Ads CPC benchmarks</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">📊 WordStream Industry Reports</div>
+            <div class="sc-desc">CTR, CVR, CPC, CPL by industry (updated annually)</div>
+            <div class="sc-use">→ Google Ads sector benchmarks</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">🔴 Meta Ads Manager</div>
+            <div class="sc-desc">Audience Size tool — estimated reach, CPM range for a defined audience</div>
+            <div class="sc-use">→ Meta CPM and reach estimates</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">🇮🇳 upGrowth / Think with Google</div>
+            <div class="sc-desc">India-specific NBFC/lending benchmark data and case studies</div>
+            <div class="sc-use">→ India finance sector benchmarks</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">📁 Your Own Account Data</div>
+            <div class="sc-desc">Historical performance from your ad accounts — the most accurate benchmark available</div>
+            <div class="sc-use">→ Months 2+ planning</div>
+          </div>
+          <div class="source-card">
+            <div class="sc-name">🔎 Meta Ad Library</div>
+            <div class="sc-desc">Competitor creative strategy, offer positioning, ad formats in market</div>
+            <div class="sc-use">→ Creative benchmarking</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lcard">
+        <div class="lcard-title"><span class="licon">📌</span> India Finance Quick Reference Benchmarks</div>
+        <table class="lref-table">
+          <thead><tr><th>Metric</th><th>Google Ads</th><th>Meta Ads</th></tr></thead>
+          <tbody>
+            <tr><td>CPC / CPM</td><td>₹50–₹250 CPC</td><td>₹60–₹180 CPM</td></tr>
+            <tr><td>CTR</td><td>3.5–5.5%</td><td>0.8–2.5%</td></tr>
+            <tr><td>CVR / Lead Rate</td><td>3–6% (landing page)</td><td>0.5–2% (lead rate)</td></tr>
+            <tr><td>CPL</td><td>₹300–₹1,200</td><td>₹120–₹400</td></tr>
+            <tr><td>Frequency</td><td>N/A</td><td>1.5–3.5×</td></tr>
+            <tr><td>Impression Share</td><td>40–65% (healthy)</td><td>N/A</td></tr>
+            <tr><td>Quality Score</td><td>6–7/10 (healthy)</td><td>N/A</td></tr>
+            <tr><td>Form CVR</td><td>N/A</td><td>50–75%</td></tr>
+          </tbody>
+        </table>
+        <div class="lbox yellow" style="margin-top:10px;">
+          <b>Important:</b> Benchmarks are starting assumptions only. Always validate against your actual account data after Month 1. Your own historical data is always the most accurate benchmark.
+        </div>
+      </div>
+    </div><!-- /learn-sources -->
+
+  </div><!-- /tab-learn -->
+  <!-- BRAND FOOTER -->
+  <div class="brand-footer">
+    <div class="bf-built">Built by</div>
+    <div class="bf-author">Debanjan Das</div>
+    <div class="bf-role">Performance Marketer · Google &amp; Meta Ads Specialist</div>
+    <a class="bf-linkedin" href="https://www.linkedin.com/in/debanjan-das-performance-marketer" target="_blank" rel="noopener noreferrer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+      </svg>
+      Connect on LinkedIn
+    </a>
+    <div class="bf-copy">© 2026 PlanrPro — AdMetrics · All rights reserved</div>
+  </div>
+
+</div><!-- /app-wrapper -->
+
+<!-- FLOATING CURRENCY DROPDOWNS -->
+<div class="currency-dropdown" id="from-dropdown">
+  <input class="dropdown-search" id="from-search" placeholder="🔍 Search currency…" oninput="filterDropdown('from',this.value)" onkeydown="if(event.key==='Escape')closeAllDropdowns()" />
+  <div class="dropdown-list" id="from-list"></div>
+</div>
+<div class="currency-dropdown" id="to-dropdown">
+  <input class="dropdown-search" id="to-search" placeholder="🔍 Search currency…" oninput="filterDropdown('to',this.value)" onkeydown="if(event.key==='Escape')closeAllDropdowns()" />
+  <div class="dropdown-list" id="to-list"></div>
+</div>
+<div id="overlay" style="display:none;position:fixed;inset:0;z-index:9998;" onclick="closeAllDropdowns()"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CURRENCY DATA
+// ══════════════════════════════════════════════
+const API_KEY = '92c73468813deff242c960a7';
+const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
+const CURRENCY_META = {
+  USD:{flag:'🇺🇸',name:'US Dollar'},EUR:{flag:'🇪🇺',name:'Euro'},GBP:{flag:'🇬🇧',name:'British Pound'},
+  INR:{flag:'🇮🇳',name:'Indian Rupee'},JPY:{flag:'🇯🇵',name:'Japanese Yen'},CAD:{flag:'🇨🇦',name:'Canadian Dollar'},
+  AUD:{flag:'🇦🇺',name:'Australian Dollar'},CHF:{flag:'🇨🇭',name:'Swiss Franc'},CNY:{flag:'🇨🇳',name:'Chinese Yuan'},
+  HKD:{flag:'🇭🇰',name:'Hong Kong Dollar'},SGD:{flag:'🇸🇬',name:'Singapore Dollar'},AED:{flag:'🇦🇪',name:'UAE Dirham'},
+  SAR:{flag:'🇸🇦',name:'Saudi Riyal'},MYR:{flag:'🇲🇾',name:'Malaysian Ringgit'},THB:{flag:'🇹🇭',name:'Thai Baht'},
+  IDR:{flag:'🇮🇩',name:'Indonesian Rupiah'},PHP:{flag:'🇵🇭',name:'Philippine Peso'},KRW:{flag:'🇰🇷',name:'South Korean Won'},
+  TRY:{flag:'🇹🇷',name:'Turkish Lira'},BRL:{flag:'🇧🇷',name:'Brazilian Real'},MXN:{flag:'🇲🇽',name:'Mexican Peso'},
+  ZAR:{flag:'🇿🇦',name:'South African Rand'},RUB:{flag:'🇷🇺',name:'Russian Ruble'},EGP:{flag:'🇪🇬',name:'Egyptian Pound'},
+  NGN:{flag:'🇳🇬',name:'Nigerian Naira'},PKR:{flag:'🇵🇰',name:'Pakistani Rupee'},BDT:{flag:'🇧🇩',name:'Bangladeshi Taka'},
+  LKR:{flag:'🇱🇰',name:'Sri Lankan Rupee'},NPR:{flag:'🇳🇵',name:'Nepalese Rupee'},MMK:{flag:'🇲🇲',name:'Myanmar Kyat'},
+  VND:{flag:'🇻🇳',name:'Vietnamese Dong'},TWD:{flag:'🇹🇼',name:'Taiwan Dollar'},NZD:{flag:'🇳🇿',name:'New Zealand Dollar'},
+  NOK:{flag:'🇳🇴',name:'Norwegian Krone'},SEK:{flag:'🇸🇪',name:'Swedish Krona'},DKK:{flag:'🇩🇰',name:'Danish Krone'},
+  PLN:{flag:'🇵🇱',name:'Polish Zloty'},CZK:{flag:'🇨🇿',name:'Czech Koruna'},HUF:{flag:'🇭🇺',name:'Hungarian Forint'},
+  RON:{flag:'🇷🇴',name:'Romanian Leu'},ILS:{flag:'🇮🇱',name:'Israeli Shekel'},QAR:{flag:'🇶🇦',name:'Qatari Riyal'},
+  KWD:{flag:'🇰🇼',name:'Kuwaiti Dinar'},BHD:{flag:'🇧🇭',name:'Bahraini Dinar'},OMR:{flag:'🇴🇲',name:'Omani Rial'},
+  JOD:{flag:'🇯🇴',name:'Jordanian Dinar'},MAD:{flag:'🇲🇦',name:'Moroccan Dirham'},KES:{flag:'🇰🇪',name:'Kenyan Shilling'},
+  GHS:{flag:'🇬🇭',name:'Ghanaian Cedi'},ETB:{flag:'🇪🇹',name:'Ethiopian Birr'},TZS:{flag:'🇹🇿',name:'Tanzanian Shilling'},
+  UGX:{flag:'🇺🇬',name:'Ugandan Shilling'},CLP:{flag:'🇨🇱',name:'Chilean Peso'},COP:{flag:'🇨🇴',name:'Colombian Peso'},
+  PEN:{flag:'🇵🇪',name:'Peruvian Sol'},ARS:{flag:'🇦🇷',name:'Argentine Peso'},BGN:{flag:'🇧🇬',name:'Bulgarian Lev'},
+  UAH:{flag:'🇺🇦',name:'Ukrainian Hryvnia'},KZT:{flag:'🇰🇿',name:'Kazakhstani Tenge'},UZS:{flag:'🇺🇿',name:'Uzbekistani Som'},
+  GEL:{flag:'🇬🇪',name:'Georgian Lari'},AMD:{flag:'🇦🇲',name:'Armenian Dram'},HRK:{flag:'🇭🇷',name:'Croatian Kuna'},
+  BYN:{flag:'🇧🇾',name:'Belarusian Ruble'},ISK:{flag:'🇮🇸',name:'Icelandic Króna'},AFN:{flag:'🇦🇫',name:'Afghan Afghani'},
+  IQD:{flag:'🇮🇶',name:'Iraqi Dinar'},IRR:{flag:'🇮🇷',name:'Iranian Rial'},LBP:{flag:'🇱🇧',name:'Lebanese Pound'},
+  YER:{flag:'🇾🇪',name:'Yemeni Rial'},KGS:{flag:'🇰🇬',name:'Kyrgyzstani Som'},TJS:{flag:'🇹🇯',name:'Tajikistani Somoni'},
+  AZN:{flag:'🇦🇿',name:'Azerbaijani Manat'},MNT:{flag:'🇲🇳',name:'Mongolian Tögrög'},KHR:{flag:'🇰🇭',name:'Cambodian Riel'},
+  LAK:{flag:'🇱🇦',name:'Lao Kip'},BND:{flag:'🇧🇳',name:'Brunei Dollar'},MVR:{flag:'🇲🇻',name:'Maldivian Rufiyaa'},
+  BTN:{flag:'🇧🇹',name:'Bhutanese Ngultrum'},RWF:{flag:'🇷🇼',name:'Rwandan Franc'},XAF:{flag:'🌍',name:'Central African CFA'},
+  XOF:{flag:'🌍',name:'West African CFA'},DZD:{flag:'🇩🇿',name:'Algerian Dinar'},TND:{flag:'🇹🇳',name:'Tunisian Dinar'},
+  LYD:{flag:'🇱🇾',name:'Libyan Dinar'},SDG:{flag:'🇸🇩',name:'Sudanese Pound'},MUR:{flag:'🇲🇺',name:'Mauritian Rupee'},
+  BWP:{flag:'🇧🇼',name:'Botswana Pula'},NAD:{flag:'🇳🇦',name:'Namibian Dollar'},ZMW:{flag:'🇿🇲',name:'Zambian Kwacha'},
+  MZN:{flag:'🇲🇿',name:'Mozambican Metical'},MWK:{flag:'🇲🇼',name:'Malawian Kwacha'},SOS:{flag:'🇸🇴',name:'Somali Shilling'},
+  DJF:{flag:'🇩🇯',name:'Djiboutian Franc'},BIF:{flag:'🇧🇮',name:'Burundian Franc'},PYG:{flag:'🇵🇾',name:'Paraguayan Guaraní'},
+  UYU:{flag:'🇺🇾',name:'Uruguayan Peso'},BOB:{flag:'🇧🇴',name:'Bolivian Boliviano'},GTQ:{flag:'🇬🇹',name:'Guatemalan Quetzal'},
+  HNL:{flag:'🇭🇳',name:'Honduran Lempira'},NIO:{flag:'🇳🇮',name:'Nicaraguan Córdoba'},CRC:{flag:'🇨🇷',name:'Costa Rican Colón'},
+  JMD:{flag:'🇯🇲',name:'Jamaican Dollar'},TTD:{flag:'🇹🇹',name:'Trinidad & Tobago $'},BBD:{flag:'🇧🇧',name:'Barbadian Dollar'},
+  FJD:{flag:'🇫🇯',name:'Fijian Dollar'},PGK:{flag:'🇵🇬',name:'PNG Kina'},WST:{flag:'🇼🇸',name:'Samoan Tālā'},
+  GYD:{flag:'🇬🇾',name:'Guyanese Dollar'},SRD:{flag:'🇸🇷',name:'Surinamese Dollar'},
+};
+const QUICK_CURRENCIES = ['USD','EUR','GBP','INR','JPY','AED','CAD','AUD'];
+let liveRates = null, allCurrencies = [], fromCur = 'USD', toCur = 'INR', activeDropdown = null;
+
+// ══════════════════════════════════════════════
+//  TAB SWITCHING
+// ══════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const idx = {calc:0, conv:1, media:2, learn:3}[tab];
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  closeAllDropdowns();
+}
+
+function switchLearn(sub) {
+  document.querySelectorAll('.learn-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.learn-sub-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('learn-' + sub).classList.add('active');
+  document.querySelector('.learn-sub-btn[data-sub="' + sub + '"]').classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  CALCULATOR
+// ══════════════════════════════════════════════
+let currentInput='0', previousInput='', operator=null, shouldResetScreen=false;
+const resultEl=document.getElementById('result'), expressionEl=document.getElementById('expression');
+function updateDisplay(v){resultEl.textContent=v;}
+function appendNum(n){if(currentInput==='0'||shouldResetScreen){currentInput=n;shouldResetScreen=false;}else{if(currentInput.length>=12)return;currentInput+=n;}updateDisplay(currentInput);}
+function appendDot(){if(shouldResetScreen){currentInput='0';shouldResetScreen=false;}if(!currentInput.includes('.'))currentInput+='.';updateDisplay(currentInput);}
+function setOperator(op){if(operator&&!shouldResetScreen)calculate(true);previousInput=currentInput;operator=op;shouldResetScreen=true;const sym={'+':'+','-':'−','*':'×','/':'÷'};expressionEl.textContent=previousInput+' '+sym[op];}
+function calculate(chained=false){if(!operator||shouldResetScreen)return;const prev=parseFloat(previousInput),curr=parseFloat(currentInput);let res;if(operator==='+')res=prev+curr;else if(operator==='-')res=prev-curr;else if(operator==='*')res=prev*curr;else if(operator==='/'){if(curr===0){updateDisplay('Error');expressionEl.textContent='';operator=null;currentInput='0';return;}res=prev/curr;}const sym={'+':'+','-':'−','*':'×','/':'÷'};if(!chained){expressionEl.textContent=previousInput+' '+sym[operator]+' '+currentInput+' =';operator=null;}res=parseFloat(res.toPrecision(12));currentInput=String(res);updateDisplay(formatNum(res));shouldResetScreen=!chained;}
+function formatNum(n){if(isNaN(n))return'Error';let s=String(n);if(s.length>12)s=parseFloat(n.toPrecision(9)).toString();return s;}
+function clearAll(){currentInput='0';previousInput='';operator=null;shouldResetScreen=false;expressionEl.textContent='';updateDisplay('0');}
+function toggleSign(){currentInput=String(parseFloat(currentInput)*-1);updateDisplay(currentInput);}
+function percentage(){currentInput=String(parseFloat(currentInput)/100);updateDisplay(currentInput);}
+function sendToConverter(){const val=parseFloat(currentInput);if(!isNaN(val)){document.getElementById('conv-amount').value=val;switchTab('conv');doConvert();}}
+document.addEventListener('keydown',e=>{if(!document.getElementById('tab-calc').classList.contains('active'))return;if(e.key>='0'&&e.key<='9')appendNum(e.key);else if(e.key==='.')appendDot();else if(e.key==='+')setOperator('+');else if(e.key==='-')setOperator('-');else if(e.key==='*')setOperator('*');else if(e.key==='/'){e.preventDefault();setOperator('/');}else if(e.key==='Enter'||e.key==='=')calculate();else if(e.key==='Escape')clearAll();else if(e.key==='Backspace'){currentInput=currentInput.length>1?currentInput.slice(0,-1):'0';updateDisplay(currentInput);}});
+
+// ══════════════════════════════════════════════
+//  CURRENCY CONVERTER
+// ══════════════════════════════════════════════
+async function fetchRates(){try{const res=await fetch(API_URL);const data=await res.json();if(data.result!=='success')throw new Error();liveRates=data.conversion_rates;allCurrencies=Object.keys(liveRates).map(code=>({code,rate:liveRates[code],flag:CURRENCY_META[code]?.flag||'🏳️',name:CURRENCY_META[code]?.name||code})).sort((a,b)=>a.code.localeCompare(b.code));const upd=data.time_last_update_utc;document.getElementById('live-dot').classList.remove('error');document.getElementById('live-text').classList.remove('error');document.getElementById('live-text').textContent='🟢 LIVE · Updated '+formatUpdateTime(upd);document.getElementById('spinner').style.display='none';document.getElementById('conv-body').style.display='block';document.getElementById('rate-note').textContent='📡 Live rates · ExchangeRate-API · '+formatUpdateTime(upd);buildDropdownList('from');buildDropdownList('to');buildQuickGrid();doConvert();}catch{document.getElementById('live-dot').classList.add('error');document.getElementById('live-text').classList.add('error');document.getElementById('live-text').textContent='⚠️ Could not load live rates — using offline fallback';document.getElementById('spinner').style.display='none';useFallbackRates();}}
+function formatUpdateTime(s){try{return new Date(s).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return s;}}
+function useFallbackRates(){liveRates={USD:1,EUR:0.8613,GBP:0.7449,INR:96.24,JPY:159.04,CAD:1.3774,AUD:1.4001,CHF:0.7875,CNY:6.811,HKD:7.835,SGD:1.279,AED:3.6725,SAR:3.75,MYR:3.964,THB:32.65,IDR:17673,PHP:61.6,KRW:1505,TRY:45.67,BRL:5.005,MXN:17.32,ZAR:16.47,RUB:71.12,EGP:52.93,NGN:1371.6,PKR:279.25,BDT:122.94,LKR:338.8,NPR:153.99,NZD:1.7036,NOK:9.237,SEK:9.348,DKK:6.43,PLN:3.655,CZK:20.92,HUF:309.4,RON:4.514,ILS:2.906,QAR:3.64,KWD:0.3091,BHD:0.376,OMR:0.3845,JOD:0.709,MAD:9.234,KES:129.47,GHS:11.56,ETB:157.6,TZS:2591,UGX:3753,CLP:898.7,COP:3734.7,PEN:3.414,ARS:1392.2,BGN:1.685,UAH:44.25,KZT:470.65,UZS:12122,GEL:2.671,AMD:367.3};allCurrencies=Object.keys(liveRates).map(code=>({code,rate:liveRates[code],flag:CURRENCY_META[code]?.flag||'🏳️',name:CURRENCY_META[code]?.name||code})).sort((a,b)=>a.code.localeCompare(b.code));document.getElementById('conv-body').style.display='block';buildDropdownList('from');buildDropdownList('to');buildQuickGrid();doConvert();}
+function getRate(code){return liveRates?.[code]||1;}
+function getCur(code){return allCurrencies.find(c=>c.code===code)||{flag:'🏳️',code,name:code};}
+function doConvert(){if(!liveRates)return;const amount=parseFloat(document.getElementById('conv-amount').value);if(isNaN(amount)){document.getElementById('conv-result').value='';document.getElementById('result-panel').style.display='none';return;}const converted=amount/getRate(fromCur)*getRate(toCur);document.getElementById('conv-result').value=converted.toFixed(4);const panel=document.getElementById('result-panel');panel.style.display='block';const fc=getCur(fromCur),tc=getCur(toCur),rate1=getRate(toCur)/getRate(fromCur);document.getElementById('rp-from').textContent=`${amount.toLocaleString()} ${fc.flag} ${fromCur}  =`;document.getElementById('rp-to').textContent=`${smartFmt(converted)} ${tc.flag} ${toCur}`;document.getElementById('rp-rate').textContent=`1 ${fromCur} = ${rate1.toFixed(6)} ${toCur}`;}
+function smartFmt(v){if(v>=1e9)return(v/1e9).toFixed(3)+'B';if(v>=1e6)return(v/1e6).toFixed(3)+'M';if(v>=1e3)return v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');if(v<0.001)return v.toFixed(6);return v.toFixed(2);}
+function swapCurrencies(){[fromCur,toCur]=[toCur,fromCur];updateCurrencyUI('from',fromCur);updateCurrencyUI('to',toCur);doConvert();buildQuickGrid();}
+function updateCurrencyUI(side,code){const cur=getCur(code);document.getElementById(side+'-flag').textContent=cur.flag;document.getElementById(side+'-code').textContent=cur.code;}
+function buildDropdownList(side,filter=''){const list=document.getElementById(side+'-list');const selected=side==='from'?fromCur:toCur;const fl=filter.toLowerCase();const filtered=allCurrencies.filter(c=>c.code.toLowerCase().includes(fl)||c.name.toLowerCase().includes(fl));list.innerHTML=filtered.map(c=>`<div class="dropdown-item ${c.code===selected?'selected':''}" onclick="selectCurrency('${side}','${c.code}')"><span class="di-flag">${c.flag}</span><span class="di-code">${c.code}</span><span class="di-name">${c.name}</span></div>`).join('');setTimeout(()=>{const sel=list.querySelector('.selected');if(sel)sel.scrollIntoView({block:'nearest'});},30);}
+function filterDropdown(side,val){buildDropdownList(side,val);}
+function positionDropdown(side){const wrap=document.getElementById(side+'-wrap');const dd=document.getElementById(side+'-dropdown');const rect=wrap.getBoundingClientRect();const spaceBelow=window.innerHeight-rect.bottom;dd.style.width='260px';if(spaceBelow>=200){dd.style.top=(rect.bottom+6)+'px';dd.style.bottom='auto';}else{dd.style.bottom=(window.innerHeight-rect.top+6)+'px';dd.style.top='auto';}let left=rect.right-260;if(left<8)left=8;dd.style.left=left+'px';}
+function toggleDropdown(side,event){event.stopPropagation();const isOpen=activeDropdown===side;closeAllDropdowns();if(isOpen)return;activeDropdown=side;const dd=document.getElementById(side+'-dropdown');document.getElementById(side+'-search').value='';buildDropdownList(side);positionDropdown(side);dd.classList.add('open');document.getElementById('overlay').style.display='block';document.getElementById(side+'-arrow').classList.add('open');setTimeout(()=>document.getElementById(side+'-search').focus(),40);}
+function closeAllDropdowns(){['from','to'].forEach(s=>{document.getElementById(s+'-dropdown').classList.remove('open');document.getElementById(s+'-arrow').classList.remove('open');});document.getElementById('overlay').style.display='none';activeDropdown=null;}
+function selectCurrency(side,code){if(side==='from')fromCur=code;else toCur=code;updateCurrencyUI(side,code);closeAllDropdowns();doConvert();buildQuickGrid();}
+function buildQuickGrid(){const grid=document.getElementById('quick-grid');grid.innerHTML=QUICK_CURRENCIES.map(code=>{const c=getCur(code);return`<button class="quick-chip ${code===toCur?'active-chip':''}" onclick="quickSelect('${code}')"><span class="qc-flag">${c.flag}</span><span class="qc-code">${c.code}</span></button>`;}).join('');}
+function quickSelect(code){toCur=code;updateCurrencyUI('to',toCur);doConvert();buildQuickGrid();}
+window.addEventListener('resize',()=>{if(activeDropdown)positionDropdown(activeDropdown);});
+window.addEventListener('scroll',()=>{if(activeDropdown)positionDropdown(activeDropdown);},true);
+
+// ══════════════════════════════════════════════
+//  MEDIA PLANNER — PLATFORM SWITCH
+// ══════════════════════════════════════════════
+function switchPlatform(plat) {
+  document.querySelectorAll('.mp-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mp-plat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mp-' + plat).classList.add('active');
+  document.querySelector('.mp-plat-btn.' + plat).classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmtN(n, d=0){ if(!isFinite(n)||isNaN(n))return'—'; return n.toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:d}); }
+function fmtRs(n, d=0){ if(!isFinite(n)||isNaN(n))return'—'; return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:d}); }
+function fmtPct(n, d=2){ if(!isFinite(n)||isNaN(n))return'—'; return n.toFixed(d)+'%'; }
+function v(id){ return parseFloat(document.getElementById(id).value); }
+function set(id,text,cls=''){
+  const el=document.getElementById(id); if(!el)return;
+  el.textContent=text;
+  el.className='mp-out-value'+(cls?' '+cls:'');
+}
+function badge(isGood,isWarn){
+  if(isGood) return '<span class="kpi-badge kpi-good">✓ Good</span>';
+  if(isWarn) return '<span class="kpi-badge kpi-warn">⚠ Watch</span>';
+  return '<span class="kpi-badge kpi-bad">✗ Poor</span>';
+}
+function setBadge(id,text,b){ const el=document.getElementById(id); if(!el)return; el.innerHTML=text+' '+b; }
+function setField(id, val){ const el=document.getElementById(id); if(el) el.value=val; }
+
+// ══════════════════════════════════════════════
+//  GOOGLE ADS
+// ══════════════════════════════════════════════
+function calcGoogle(){
+  const budget=v('g-budget'), cpc=v('g-cpc'), ctr=v('g-ctr'), cvr=v('g-cvr');
+  const comm=v('g-commission'), ldr=v('g-ldr'), qs=v('g-qs'), is_=v('g-is');
+
+  const hint = document.getElementById('g-hint');
+  const hasCore = !isNaN(budget)&&!isNaN(cpc)&&!isNaN(ctr)&&!isNaN(cvr)&&budget>0&&cpc>0&&ctr>0&&cvr>0;
+
+  if(!hasCore){
+    hint.style.display='block';
+    // clear outputs
+    ['g-out-clicks','g-out-impr','g-out-leads','g-out-cpl','g-out-cpl2',
+     'g-out-disb','g-out-rev','g-out-roas','g-out-becpl',
+     'g-kpi-ctr','g-kpi-cvr','g-kpi-qs','g-kpi-is','g-kpi-cpl',
+     'g-s-cpc-c','g-s-cvr-c','g-s-leads-c','g-s-cpl-c',
+     'g-s-cpc-b','g-s-cvr-b','g-s-leads-b','g-s-cpl-b',
+     'g-s-cpc-o','g-s-cvr-o','g-s-leads-o','g-s-cpl-o'].forEach(id=>set(id,'—'));
+    return;
+  }
+  hint.style.display='none';
+
+  // Core formula chain
+  const clicks      = budget / cpc;
+  const impressions = clicks / (ctr / 100);
+  const leads       = clicks * (cvr / 100);
+  const cpl         = budget / leads;
+  const cpl2        = cpc / (cvr / 100);
+  const disb        = !isNaN(ldr)&&ldr>0 ? leads*(ldr/100) : NaN;
+  const revenue     = !isNaN(comm)&&!isNaN(disb) ? disb*comm : NaN;
+  const roas        = !isNaN(revenue) ? revenue/budget : NaN;
+  const becpl       = !isNaN(comm)&&!isNaN(ldr)&&ldr>0 ? comm*(ldr/100) : NaN;
+
+  set('g-out-clicks', fmtN(clicks,1));
+  set('g-out-impr',   fmtN(impressions));
+  set('g-out-leads',  fmtN(leads,1), 'highlight');
+  set('g-out-cpl',    fmtRs(cpl),    'highlight');
+  set('g-out-cpl2',   fmtRs(cpl2));
+  set('g-out-disb',   isNaN(disb)    ? '— (enter LDR)' : fmtN(disb,1));
+  set('g-out-rev',    isNaN(revenue) ? '— (enter Commission + LDR)' : fmtRs(revenue));
+  set('g-out-roas',   isNaN(roas)    ? '—' : roas.toFixed(2)+'x');
+  set('g-out-becpl',  isNaN(becpl)   ? '— (enter Commission + LDR)' : fmtRs(becpl));
+
+  // KPI health
+  setBadge('g-kpi-ctr', fmtPct(ctr), badge(ctr>=3.5&&ctr<=5.5, ctr>=2&&ctr<3.5));
+  setBadge('g-kpi-cvr', fmtPct(cvr), badge(cvr>=3&&cvr<=6,     cvr>=2&&cvr<3));
+  if(!isNaN(qs))  setBadge('g-kpi-qs', qs+'/10', badge(qs>=6, qs>=4&&qs<6));
+  else            set('g-kpi-qs','—');
+  if(!isNaN(is_)) setBadge('g-kpi-is', fmtPct(is_), badge(is_>=40&&is_<=65, is_>=25&&is_<40));
+  else            set('g-kpi-is','—');
+  if(!isNaN(becpl)){
+    const r=cpl/becpl;
+    setBadge('g-kpi-cpl', fmtRs(cpl)+' vs break-even '+fmtRs(becpl), badge(r<=0.7, r<=1.0));
+  } else set('g-kpi-cpl','—');
+
+  // 3-Scenario stress test
+  const cpc_c=cpc*1.2, cvr_c=cvr*0.8, leads_c=(budget/cpc_c)*(cvr_c/100);
+  const cpc_o=cpc*0.85, cvr_o=cvr*1.2, leads_o=(budget/cpc_o)*(cvr_o/100);
+
+  document.getElementById('g-s-cpc-c').textContent  = fmtRs(cpc_c);
+  document.getElementById('g-s-cvr-c').textContent  = fmtPct(cvr_c);
+  document.getElementById('g-s-leads-c').textContent= fmtN(leads_c,1);
+  document.getElementById('g-s-cpl-c').textContent  = fmtRs(budget/leads_c);
+  document.getElementById('g-s-cpc-b').textContent  = fmtRs(cpc);
+  document.getElementById('g-s-cvr-b').textContent  = fmtPct(cvr);
+  document.getElementById('g-s-leads-b').textContent= fmtN(leads,1);
+  document.getElementById('g-s-cpl-b').textContent  = fmtRs(cpl);
+  document.getElementById('g-s-cpc-o').textContent  = fmtRs(cpc_o);
+  document.getElementById('g-s-cvr-o').textContent  = fmtPct(cvr_o);
+  document.getElementById('g-s-leads-o').textContent= fmtN(leads_o,1);
+  document.getElementById('g-s-cpl-o').textContent  = fmtRs(budget/leads_o);
+}
+
+function resetGoogle(){
+  ['g-budget','g-cpc','g-ctr','g-cvr','g-commission','g-ldr','g-qs','g-is']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  calcGoogle();
+}
+
+function loadGoogleExample(){
+  setField('g-budget','30000'); setField('g-cpc','130');
+  setField('g-ctr','4.2');      setField('g-cvr','4.8');
+  setField('g-commission','5000'); setField('g-ldr','8');
+  setField('g-qs','7');         setField('g-is','55');
+  calcGoogle();
+}
+
+// ══════════════════════════════════════════════
+//  META ADS
+// ══════════════════════════════════════════════
+function calcMeta(){
+  const budget=v('m-budget'), cpm=v('m-cpm'), ctr=v('m-ctr');
+  const lr=v('m-lr'), freq=v('m-freq'), comm=v('m-commission'), ldr=v('m-ldr');
+
+  const hint = document.getElementById('m-hint');
+  const hasCore = !isNaN(budget)&&!isNaN(cpm)&&budget>0&&cpm>0;
+
+  if(!hasCore){
+    hint.style.display='block';
+    ['m-out-impr','m-out-reach','m-out-clicks','m-out-cpc','m-out-leads','m-out-cpl',
+     'm-out-disb','m-out-rev','m-out-roas','m-out-ecpm',
+     'm-kpi-cpm','m-kpi-ctr','m-kpi-freq','m-kpi-cpl',
+     'm-s-cpm-c','m-s-lr-c','m-s-leads-c','m-s-cpl-c',
+     'm-s-cpm-b','m-s-lr-b','m-s-leads-b','m-s-cpl-b',
+     'm-s-cpm-o','m-s-lr-o','m-s-leads-o','m-s-cpl-o'].forEach(id=>set(id,'—'));
+    return;
+  }
+  hint.style.display='none';
+
+  const impressions = (budget/cpm)*1000;
+  const reach       = !isNaN(freq)&&freq>0 ? impressions/freq : NaN;
+  const clicks      = !isNaN(ctr)&&ctr>0   ? impressions*(ctr/100) : NaN;
+  const cpc_calc    = !isNaN(ctr)&&ctr>0   ? cpm/(ctr*10) : NaN;
+  const leads       = !isNaN(lr)&&lr>0      ? impressions*(lr/100) : NaN;
+  const cpl         = !isNaN(leads)&&leads>0 ? budget/leads : NaN;
+  const disb        = !isNaN(leads)&&!isNaN(ldr)&&ldr>0 ? leads*(ldr/100) : NaN;
+  const revenue     = !isNaN(disb)&&!isNaN(comm)&&comm>0 ? disb*comm : NaN;
+  const roas        = !isNaN(revenue) ? revenue/budget : NaN;
+  const ecpm        = (budget/impressions)*1000;
+
+  set('m-out-impr',   fmtN(impressions));
+  set('m-out-reach',  isNaN(reach)    ? '— (enter Frequency)' : fmtN(reach));
+  set('m-out-clicks', isNaN(clicks)   ? '— (enter CTR)'       : fmtN(clicks));
+  set('m-out-cpc',    isNaN(cpc_calc) ? '— (enter CTR)'       : fmtRs(cpc_calc,2));
+  set('m-out-leads',  isNaN(leads)    ? '— (enter Lead Rate)'  : fmtN(leads,1), 'highlight');
+  set('m-out-cpl',    isNaN(cpl)      ? '— (enter Lead Rate)'  : fmtRs(cpl),    'highlight');
+  set('m-out-disb',   isNaN(disb)     ? '—' : fmtN(disb,1));
+  set('m-out-rev',    isNaN(revenue)  ? '—' : fmtRs(revenue));
+  set('m-out-roas',   isNaN(roas)     ? '—' : roas.toFixed(2)+'x');
+  set('m-out-ecpm',   fmtRs(ecpm,2));
+
+  setBadge('m-kpi-cpm', fmtRs(cpm), badge(cpm>=60&&cpm<=180, (cpm<60)||(cpm>180&&cpm<=250)));
+  if(!isNaN(ctr))  setBadge('m-kpi-ctr',  fmtPct(ctr),       badge(ctr>=0.8&&ctr<=2.5, ctr>=0.5&&ctr<0.8));
+  else             set('m-kpi-ctr','—');
+  if(!isNaN(freq)) setBadge('m-kpi-freq', freq.toFixed(1)+'x', badge(freq>=1.5&&freq<=3.5, (freq<1.5)||(freq>3.5&&freq<=5)));
+  else             set('m-kpi-freq','—');
+  if(!isNaN(cpl))  setBadge('m-kpi-cpl',  fmtRs(cpl),        badge(cpl>=120&&cpl<=400, cpl>400&&cpl<=600));
+  else             set('m-kpi-cpl','—');
+
+  // 3-Scenario
+  const cpm_c=cpm*1.2,  lr_c=!isNaN(lr)?lr*0.8:lr;
+  const cpm_o=cpm*0.85, lr_o=!isNaN(lr)?lr*1.2:lr;
+  const leads_c = !isNaN(lr_c) ? ((budget/cpm_c)*1000)*(lr_c/100) : NaN;
+  const leads_o = !isNaN(lr_o) ? ((budget/cpm_o)*1000)*(lr_o/100) : NaN;
+
+  document.getElementById('m-s-cpm-c').textContent   = fmtRs(cpm_c);
+  document.getElementById('m-s-lr-c').textContent    = isNaN(lr_c) ? '—' : fmtPct(lr_c);
+  document.getElementById('m-s-leads-c').textContent = isNaN(leads_c) ? '—' : fmtN(leads_c,1);
+  document.getElementById('m-s-cpl-c').textContent   = isNaN(leads_c) ? '—' : fmtRs(budget/leads_c);
+  document.getElementById('m-s-cpm-b').textContent   = fmtRs(cpm);
+  document.getElementById('m-s-lr-b').textContent    = isNaN(lr) ? '—' : fmtPct(lr);
+  document.getElementById('m-s-leads-b').textContent = isNaN(leads) ? '—' : fmtN(leads,1);
+  document.getElementById('m-s-cpl-b').textContent   = isNaN(cpl) ? '—' : fmtRs(cpl);
+  document.getElementById('m-s-cpm-o').textContent   = fmtRs(cpm_o);
+  document.getElementById('m-s-lr-o').textContent    = isNaN(lr_o) ? '—' : fmtPct(lr_o);
+  document.getElementById('m-s-leads-o').textContent = isNaN(leads_o) ? '—' : fmtN(leads_o,1);
+  document.getElementById('m-s-cpl-o').textContent   = isNaN(leads_o) ? '—' : fmtRs(budget/leads_o);
+}
+
+function resetMeta(){
+  ['m-budget','m-cpm','m-ctr','m-lr','m-freq','m-commission','m-ldr']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  calcMeta();
+}
+
+function loadMetaExample(){
+  setField('m-budget','40000'); setField('m-cpm','110');
+  setField('m-ctr','1.2');      setField('m-lr','0.9');
+  setField('m-freq','2.5');     setField('m-commission','5000');
+  setField('m-ldr','8');
+  calcMeta();
+}
+
+// ══════════════════════════════════════════════
+//  UNIVERSAL
+// ══════════════════════════════════════════════
+function calcUniversal(){
+  // ROAS / ROI
+  const rev=v('u-revenue'), spend=v('u-spend'), tc=v('u-totalcost');
+  if(!isNaN(rev)&&!isNaN(spend)&&spend>0){
+    set('u-out-roas',(rev/spend).toFixed(2)+'x','highlight');
+    if(!isNaN(tc)&&tc>0){
+      const roi=((rev-tc)/tc)*100, profit=rev-tc;
+      set('u-out-roi',   fmtPct(roi,1),  roi>=0?'highlight':'danger');
+      set('u-out-profit',fmtRs(profit),  profit>=0?'highlight':'danger');
+    } else { set('u-out-roi','— (enter Total Cost)'); set('u-out-profit','—'); }
+  } else { set('u-out-roas','—'); set('u-out-roi','—'); set('u-out-profit','—'); }
+
+  // CPL shortcut
+  const cpc=v('u-cpc'), cvr=v('u-cvr');
+  if(!isNaN(cpc)&&!isNaN(cvr)&&cvr>0){
+    set('u-out-cpl',      fmtRs(cpc/(cvr/100)), 'highlight');
+    set('u-out-halvecvr', fmtPct(cvr*2));
+    set('u-out-halvecpc', fmtRs(cpc/2));
+  } else { set('u-out-cpl','—'); set('u-out-halvecvr','—'); set('u-out-halvecpc','—'); }
+
+  // CPA
+  const b2=v('u-budget2'), acq=v('u-acq'), cl2=v('u-clicks2'), im2=v('u-impr2'), re2=v('u-reach2');
+  set('u-out-cpa',   (!isNaN(b2)&&!isNaN(acq)&&acq>0)  ? fmtRs(b2/acq,'highlight') : '—', (!isNaN(b2)&&!isNaN(acq)&&acq>0)?'highlight':'');
+  set('u-out-cvr2',  (!isNaN(acq)&&!isNaN(cl2)&&cl2>0) ? fmtPct((acq/cl2)*100)      : '—');
+  set('u-out-ctr2',  (!isNaN(cl2)&&!isNaN(im2)&&im2>0) ? fmtPct((cl2/im2)*100)      : '—');
+  set('u-out-cpc2',  (!isNaN(b2)&&!isNaN(cl2)&&cl2>0)  ? fmtRs(b2/cl2,2)            : '—');
+  set('u-out-ecpm2', (!isNaN(b2)&&!isNaN(im2)&&im2>0)  ? fmtRs((b2/im2)*1000,2)     : '—');
+  set('u-out-freq2', (!isNaN(im2)&&!isNaN(re2)&&re2>0) ? (im2/re2).toFixed(2)+'x'   : '—');
+
+  // Break-even
+  const ltv=v('u-ltv'), ldr2=v('u-ldr2');
+  if(!isNaN(ltv)&&!isNaN(ldr2)&&ldr2>0){
+    const becpl=ltv*(ldr2/100);
+    set('u-out-becpl',   fmtRs(becpl),'highlight');
+    set('u-out-safecpl', fmtRs(becpl*0.7));
+  } else { set('u-out-becpl','—'); set('u-out-safecpl','—'); }
+
+  // QS impact
+  const cc=v('u-cur-cpc'), cq=v('u-cur-qs'), nq=v('u-new-qs');
+  if(!isNaN(cc)&&!isNaN(cq)&&!isNaN(nq)&&cq>0&&nq>0){
+    const nc=cc*(cq/nq), drop=((cc-nc)/cc)*100, extra=Math.round(100000/nc-100000/cc);
+    set('u-out-newcpc',  fmtRs(nc,2),'highlight');
+    set('u-out-cpcdrop', fmtPct(drop,1)+(drop>0?' cheaper':' more expensive'));
+    set('u-out-extracl', extra>0?'+'+fmtN(extra)+' per ₹1L budget':fmtN(extra));
+  } else { set('u-out-newcpc','—'); set('u-out-cpcdrop','—'); set('u-out-extracl','—'); }
+}
+
+function resetUniversal(){
+  ['u-revenue','u-spend','u-totalcost','u-cpc','u-cvr','u-budget2','u-acq',
+   'u-clicks2','u-impr2','u-reach2','u-ltv','u-ldr2','u-cur-cpc','u-cur-qs','u-new-qs']
+   .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  calcUniversal();
+}
+
+function loadUniExample(){
+  setField('u-revenue','500000'); setField('u-spend','100000'); setField('u-totalcost','150000');
+  setField('u-cpc','200');        setField('u-cvr','5');
+  setField('u-budget2','100000'); setField('u-acq','50');
+  setField('u-clicks2','1000');   setField('u-impr2','25000'); setField('u-reach2','10000');
+  setField('u-ltv','8000');       setField('u-ldr2','10');
+  setField('u-cur-cpc','200');    setField('u-cur-qs','5'); setField('u-new-qs','7');
+  calcUniversal();
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+fetchRates();
+setInterval(fetchRates, 60 * 60 * 1000);
+</script>
+</body>
+</html>
